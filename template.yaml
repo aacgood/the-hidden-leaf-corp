@@ -1,0 +1,50 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Discord Bot Lambda (Serverless)
+
+Globals:
+  Function:
+    Timeout: 10
+    Runtime: python3.12
+    Architectures:
+      - x86_64
+
+Resources:
+  DiscordBotFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/discord_bot/
+      Handler: app.lambda_handler
+      Runtime: python3.12
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: "secretsmanager:GetSecretValue"
+              Resource: "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:discord_keys-*"
+              
+      Events:
+        DiscordInteractions:
+          Type: Api
+          Properties:
+            Path: /interactions
+            Method: post
+
+Parameters:
+  DiscordPublicKey:
+    Type: String
+    Description: "Discord Application Public Key (can also come from Secrets Manager)"
+
+Outputs:
+  DiscordApi:
+    Description: "API Gateway endpoint URL for Prod stage for Discord interactions"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/interactions"
+    
+  DiscordBotFunction:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt DiscordBotFunction.Arn
+
+  DiscordBotFunctionIamRole:
+    Description: "IAM Role for Lambda function"
+    Value: !GetAtt DiscordBotFunctionRole.Arn
