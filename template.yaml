@@ -11,6 +11,7 @@ Globals:
       - x86_64
 
 Resources:
+  # --- Frontend Lambda for Discord interactions ---
   DiscordBotFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -21,11 +22,16 @@ Resources:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Action: "secretsmanager:GetSecretValue"
+              Action:
+                - "secretsmanager:GetSecretValue"
+                - "sqs:SendMessage"
               Resource: 
-                - "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:discord_keys-*"
-                - "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:supabase_keys-*"
-              
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+                - !GetAtt RegisterQueue.Arn
+      Environment:
+        Variables:
+          REGISTER_QUEUE_URL: !Ref RegisterQueue
       Events:
         DiscordInteractions:
           Type: Api
@@ -33,31 +39,48 @@ Resources:
             Path: /interactions
             Method: post
 
-  # Keep-warm EventBridge rule
-  KeepWarmRule:
-    Type: AWS::Events::Rule
+  # --- SQS Queue for background processing ---
+  RegisterQueue:
+    Type: AWS::SQS::Queue
     Properties:
-      Name: DiscordBotKeepWarmRule
-      ScheduleExpression: "rate(10 minutes)"  # every 10 minutes
-      State: ENABLED
-      Targets:
-        - Arn: !GetAtt DiscordBotFunction.Arn
-          Id: KeepWarmTarget
-          Input: '{"keep_warm": true}'
+      QueueName: register-queue
 
-  # Grant EventBridge permission to invoke the Lambda
-  LambdaPermissionForEvents:
-    Type: AWS::Lambda::Permission
+  # --- Worker Lambda triggered by SQS ---
+  RegisterWorkerFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      FunctionName: !Ref DiscordBotFunction
-      Action: "lambda:InvokeFunction"
-      Principal: "events.amazonaws.com"
-      SourceArn: !GetAtt KeepWarmRule.Arn
+      CodeUri: src/discord_bot/
+      Handler: register_worker.lambda_handler
+      Runtime: python3.12
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "secretsmanager:GetSecretValue"
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+            
+            - Effect: "Allow"
+              Action:
+                - "secretsmanager:GetSecretValue"
+                - "secretsmanager:CreateSecret"
+                - "secretsmanager:UpdateSecret"
+                - "secretsmanager:ReplicateSecretToRegions"
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+      Events:
+        RegisterQueueEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt RegisterQueue.Arn
+            BatchSize: 1
 
-Parameters:
-  DiscordPublicKey:
-    Type: String
-    Description: "Discord Application Public Key (can also come from Secrets Manager)"
+# Parameters:
+#   DiscordPublicKey:
+#     Type: String
+#     Description: "Discord Application Public Key (can also come from Secrets Manager)"
 
 Outputs:
   DiscordApi:
@@ -71,3 +94,11 @@ Outputs:
   DiscordBotFunctionIamRole:
     Description: "IAM Role for Lambda function"
     Value: !GetAtt DiscordBotFunctionRole.Arn
+
+  RegisterQueueUrl:
+    Description: "URL of the SQS queue for registration processing"
+    Value: !Ref RegisterQueue
+
+  RegisterQueueArn:
+    Description: "ARN of the SQS queue for registration processing"
+    Value: !GetAtt RegisterQueue.Arn

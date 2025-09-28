@@ -6,6 +6,37 @@ cd src/discord_bot
 pip install -r requirements.txt -t .
 ```
 
+## Testing Locally
+
+Install localstack (for SQS)
+
+```sh
+pip install localstack awscli-local
+```
+
+Setup the test environment:
+
+Terminal 1:
+
+```sh
+docker run --rm -it -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack # "local" aws services on http://localhost:4566
+```
+
+Terminal 2:
+
+```sh
+aws --endpoint-url=http://localhost:4566 sqs create-queue --queue-name register-queue
+aws --endpoint-url=http://localhost:4566 sqs list-queues
+sam build --use-container
+sam local start-api --env-vars env.json
+```
+
+Terminal 3:
+
+```sh
+ngrok http 3000 # Use the output of this to feed into discord interactions url
+```
+
 # Database tables
 
 Notes: 
