@@ -33,6 +33,27 @@ Resources:
             Path: /interactions
             Method: post
 
+  # Keep-warm EventBridge rule
+  KeepWarmRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: DiscordBotKeepWarmRule
+      ScheduleExpression: "rate(10 minutes)"  # every 10 minutes
+      State: ENABLED
+      Targets:
+        - Arn: !GetAtt DiscordBotFunction.Arn
+          Id: KeepWarmTarget
+          Input: '{"keep_warm": true}'
+
+  # Grant EventBridge permission to invoke the Lambda
+  LambdaPermissionForEvents:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref DiscordBotFunction
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: !GetAtt KeepWarmRule.Arn
+
 Parameters:
   DiscordPublicKey:
     Type: String
