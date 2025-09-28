@@ -1,19 +1,18 @@
-import os
 import json
 import boto3
-from nacl.signing import VerifyKey
-from nacl.exceptions import BadSignatureError
 from _commands.ping import handle_ping
 from _commands.register import handle_register
+from nacl.signing import VerifyKey
+from nacl.exceptions import BadSignatureError
 
 
 # Fetch Discord public key from Secrets Manager
 def get_discord_public_key():
-    secret_name = "discord_keys"
-    region_name = "ap-southeast-1"
+    SECRET_NAME = "discord_keys"
+    REGION_NAME = "ap-southeast-1"
     
-    client = boto3.client("secretsmanager", region_name=region_name)
-    response = client.get_secret_value(SecretId=secret_name)
+    client = boto3.client("secretsmanager", region_name=REGION_NAME)
+    response = client.get_secret_value(SecretId=SECRET_NAME)
     secret = json.loads(response["SecretString"])
     
     return secret["DISCORD_PUBLIC_KEY"]

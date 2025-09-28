@@ -220,13 +220,3 @@ __marimo__/
 .aws-sam
 
 # Other dependencies for local dev
-src/discord_bot/bin
-src/discord_bot/certifi*
-src/discord_bot/cffi*
-src/discord_bot/charset_*
-src/discord_bot/idna*
-src/discord_bot/*nacl*
-src/discord_bot/pycparser*
-src/discord_bot/requests*
-src/discord_bot/urllib*
-

@@ -1,6 +1,10 @@
 sam local start-api
 ngrok http 3000
 
+```
+cd src/discord_bot
+pip install -r requirements.txt -t .
+```
 
 # Database tables
 

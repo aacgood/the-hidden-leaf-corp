@@ -22,7 +22,9 @@ Resources:
           Statement:
             - Effect: "Allow"
               Action: "secretsmanager:GetSecretValue"
-              Resource: "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:discord_keys-*"
+              Resource: 
+                - "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:discord_keys-*"
+                - "arn:aws:secretsmanager:ap-southeast-1:256188949457:secret:supabase_keys-*"
               
       Events:
         DiscordInteractions:

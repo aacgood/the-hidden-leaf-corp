@@ -20,6 +20,7 @@ s3_prefix = "discord-bot-lambda"
 region = "ap-southeast-1"
 image_repositories = []
 # parameter_overrides = "DiscordPublicKey=\"4f1a359409f6e740c233f093f3a099447b745d2f4a06656cffe7b2c6edb25de4\""
+parameter_overrides = "DiscordPublicKey=\"\""
 
 [default.package.parameters]
 resolve_s3 = true
