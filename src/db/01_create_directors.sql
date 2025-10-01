@@ -9,3 +9,6 @@ CREATE TABLE directors (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE
 );
+
+-- RLS
+ALTER TABLE directors ENABLE ROW LEVEL SECURITY;

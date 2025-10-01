@@ -45,7 +45,7 @@ Resources:
     Properties:
       QueueName: register-queue
 
-  # --- Worker Lambda triggered by SQS ---
+  # --- Worker Lambda triggered by SQS (slash register) ---
   RegisterWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -77,6 +77,34 @@ Resources:
             Queue: !GetAtt RegisterQueue.Arn
             BatchSize: 1
 
+  # --- CRON jobs for populating the DB ---
+  PopulateDirectorEducationCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/cron/
+      Handler: populate_director_education.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "secretsmanager:GetSecretValue"
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys*"
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 3 * * ? *)
+            Name: DailyDirectorEducationJob
+            Description: "Runs PopulateDirectorEducationCron once daily at 17:00 UTC"
+            Enabled: true
+
+
 # Parameters:
 #   DiscordPublicKey:
 #     Type: String
@@ -102,3 +130,11 @@ Outputs:
   RegisterQueueArn:
     Description: "ARN of the SQS queue for registration processing"
     Value: !GetAtt RegisterQueue.Arn
+
+  PopulateDirectorEducationCronFunction:
+    Description: "Lambda function ARN for daily director education cron job"
+    Value: !GetAtt PopulateDirectorEducationCron.Arn
+
+  PopulateDirectorEducationCronFunctionName:
+    Description: "Lambda function name"
+    Value: !Ref PopulateDirectorEducationCron

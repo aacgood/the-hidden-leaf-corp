@@ -8,3 +8,6 @@ CREATE TABLE director_stock_blocks (
     updated_at TIMESTAMP WITH TIME ZONE,
     UNIQUE (torn_user_id, block_name)
 );
+
+-- RLS
+ALTER TABLE director_stock_blocks ENABLE ROW LEVEL SECURITY;
