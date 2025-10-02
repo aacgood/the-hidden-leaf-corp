@@ -55,7 +55,7 @@ Directors will supply their limited API keys via discord, stored in supabase
 - API_KEY	(supplied via discord slash command)
 - education	(from users endpoint.  
 			Business related courses: [1,2,3,4,5,6,7,8,9,10,11,12,13,22,28,88,100]
-			Stock related: SYS, TCP, MSG, TGP, YAZ
+			Stock related:  SYS(3), YAZ(8), MSG(11), TCP(13), TGP(23), WSU(25),
 - equity
 - voting_rights
 

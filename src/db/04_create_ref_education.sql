@@ -1,4 +1,4 @@
--- Tracks which stock blocks a director currently holds
+-- Tracks which educations a director has completed
 CREATE TABLE ref_education (
     id BIGSERIAL PRIMARY KEY,
     course_id INT NOT NULL,

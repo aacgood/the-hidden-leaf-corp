@@ -94,21 +94,42 @@ Resources:
               Resource:
                 - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
                 - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
-            Schedule: cron(0 3 * * ? *)
+            Schedule: cron(0 17 * * ? *)
             Name: DailyDirectorEducationJob
             Description: "Runs PopulateDirectorEducationCron once daily at 17:00 UTC"
             Enabled: true
 
+  PopulateDirectorStockBlocksCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/cron/
+      Handler: populate_director_stock_blocks.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "secretsmanager:GetSecretValue"
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 17 * * ? *)
+            Name: DailyDirectorStockBlocksJob
+            Description: "Runs DirectorStockBlocksCron once daily at 17:00 UTC"
+            Enabled: true
 
-# Parameters:
-#   DiscordPublicKey:
-#     Type: String
-#     Description: "Discord Application Public Key (can also come from Secrets Manager)"
 
 Outputs:
   DiscordApi:
@@ -134,7 +155,16 @@ Outputs:
   PopulateDirectorEducationCronFunction:
     Description: "Lambda function ARN for daily director education cron job"
     Value: !GetAtt PopulateDirectorEducationCron.Arn
+    
+  PopulateDirectorStockBlocksCronFunction:
+    Description: "Lambda function ARN for daily director education cron job"
+    Value: !GetAtt PopulateDirectorStockBlocksCron.Arn
 
   PopulateDirectorEducationCronFunctionName:
     Description: "Lambda function name"
     Value: !Ref PopulateDirectorEducationCron
+
+  PopulateDirectorStockBlocksCronFunctionName:
+    Description: "Lambda function name"
+    Value: !Ref PopulateDirectorStockBlocksCron
+
