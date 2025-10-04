@@ -15,3 +15,7 @@ sam local invoke PopulateDirectorEducationCron --event src/cron/sample_event.jso
 ```sh
 sam local invoke PopulateDirectorStockBlocksCron --event src/cron/sample_event.json
 ```
+
+## SAM Deployment
+
+These are setup as a cron at 17:00 UTC.

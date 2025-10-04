@@ -4,10 +4,12 @@ import boto3
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
 from _commands.ping import handle_ping
+from _commands.company_channels import handle_link_company
 
 DISCORD_API_BASE = "https://discord.com/api/v10/interactions"
 
-REGISTER_QUEUE_URL = os.environ.get("REGISTER_QUEUE_URL")
+SLASH_COMMAND_QUEUE_URL = os.environ.get("SLASH_COMMAND_QUEUE_URL")
+
 sqs_client = boto3.client("sqs")
 
 def get_secrets():
@@ -86,13 +88,53 @@ def lambda_handler(event, context):
 
             # --- Push payload to SQS for worker Lambda ---
             try:
+                print("SLASH_COMMAND_QUEUE_URL:", SLASH_COMMAND_QUEUE_URL)
+
                 sqs_client.send_message(
-                    QueueUrl=REGISTER_QUEUE_URL,
-                    MessageBody=json.dumps(payload)
+                    QueueUrl=SLASH_COMMAND_QUEUE_URL,
+                    MessageBody=json.dumps({
+                        "command_name": command_name,
+                        "payload": payload
+                    })
                 )
-                print("Payload pushed to SQS")
+                print("Payload for /register pushed to SQS")
             except Exception as e:
-                print("Error pushing to SQS:", e)
+                print("Error pushing /register to SQS:", e)
+
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps(defer_response)
+            }
+
+        elif command_name == "link":
+            # --- Immediately defer response ---
+            defer_response = {"type": 5}  # DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+
+            company_id = next(
+                (opt["value"] for opt in payload["data"]["options"] if opt["name"] == "company_id"),
+                None
+            )
+
+            discord_channel_id = payload["channel"]["id"]
+            channel_name = payload["channel"]["name"]  # <-- human-friendly label
+
+            message_body = {
+                "command_name": "link",
+                "payload": payload,                      # <--- include full interaction payload
+                "company_id": company_id,
+                "discord_channel_id": discord_channel_id,
+                "channel_name": channel_name
+            }
+
+            try:
+                sqs_client.send_message(
+                    QueueUrl=SLASH_COMMAND_QUEUE_URL,
+                    MessageBody=json.dumps(message_body)
+                )
+                print(f"/link payload sent to SQS: {message_body}")
+            except Exception as e:
+                print(f"Error pushing /link payload to SQS: {e}")
 
             return {
                 "statusCode": 200,

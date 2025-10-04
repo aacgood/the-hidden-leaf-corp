@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from supabase import create_client, Client
 
 DISCORD_API_BASE = "https://discord.com/api/v10/webhooks"  # follow-up endpoint
+SECRET_NAME = "torn_director_api_keys"
+REGION = "ap-southeast-1"
 
 def get_secrets():
     """
@@ -30,11 +32,6 @@ def get_secrets():
 
 SECRETS = get_secrets()
 
-import boto3
-import json
-
-SECRET_NAME = "torn_director_api_keys"
-REGION = "ap-southeast-1"
 
 def upsert_director_api_key(director_name: str, director_id: int, api_key: str) -> str:
     """
@@ -80,19 +77,11 @@ def upsert_director_api_key(director_name: str, director_id: int, api_key: str) 
 
 
 
-def lambda_handler(event, context):
-    # event can contain multiple SQS messages (BatchSize=1 is recommended)
-    for record in event.get("Records", []):
-        payload = json.loads(record["body"])
-        process_register(payload)
-    return {"statusCode": 200}
-
-
 def process_register(payload):
     """
     Performs Torn API lookup, Supabase upsert, and sends final Discord follow-up message
     """
-    print(payload)
+    #print(payload)
     api_key = payload["data"]["options"][0]["value"]
     user_nick = payload["member"].get("nick") #or payload["member"]["user"]["username"]
     interaction_token = payload["token"]
@@ -134,7 +123,7 @@ def process_register(payload):
             }
 
             # THIS NEEDS TO BE FLIPPED TO == WHEN READY
-            if director_id != torn_user_id:
+            if director_id == torn_user_id:
                 supabase.table("directors").upsert(director_data, on_conflict="torn_user_id").execute()
                 content = f"Company director: {director_data}"
             else:

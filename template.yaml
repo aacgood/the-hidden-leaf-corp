@@ -28,10 +28,10 @@ Resources:
               Resource: 
                 - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
                 - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !GetAtt RegisterQueue.Arn
+                - !GetAtt SlashCommandQueue.Arn
       Environment:
         Variables:
-          REGISTER_QUEUE_URL: !Ref RegisterQueue
+          SLASH_COMMAND_QUEUE_URL: !Ref SlashCommandQueue
       Events:
         DiscordInteractions:
           Type: Api
@@ -39,18 +39,18 @@ Resources:
             Path: /interactions
             Method: post
 
-  # --- SQS Queue for background processing ---
-  RegisterQueue:
+  # --- Generic SQS Queue for background processing ---
+  SlashCommandQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: register-queue
+      QueueName: slash-command-queue
 
-  # --- Worker Lambda triggered by SQS (slash register) ---
-  RegisterWorkerFunction:
+  # --- Worker Lambda triggered by SQS (routes commands) ---
+  SlashCommandWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: src/discord_bot/
-      Handler: register_worker.lambda_handler
+      Handler: slash_command_worker.lambda_handler
       Runtime: python3.12
       Policies:
         - Version: "2012-10-17"
@@ -71,10 +71,10 @@ Resources:
               Resource:
                 - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
       Events:
-        RegisterQueueEvent:
+        SlashCommandQueueEvent:
           Type: SQS
           Properties:
-            Queue: !GetAtt RegisterQueue.Arn
+            Queue: !GetAtt SlashCommandQueue.Arn
             BatchSize: 1
 
   # --- CRON jobs for populating the DB ---
@@ -130,7 +130,6 @@ Resources:
             Description: "Runs DirectorStockBlocksCron once daily at 17:00 UTC"
             Enabled: true
 
-
 Outputs:
   DiscordApi:
     Description: "API Gateway endpoint URL for Prod stage for Discord interactions"
@@ -144,20 +143,20 @@ Outputs:
     Description: "IAM Role for Lambda function"
     Value: !GetAtt DiscordBotFunctionRole.Arn
 
-  RegisterQueueUrl:
-    Description: "URL of the SQS queue for registration processing"
-    Value: !Ref RegisterQueue
+  SlashCommandQueueUrl:
+    Description: "URL of the SQS queue for slash command processing"
+    Value: !Ref SlashCommandQueue
 
-  RegisterQueueArn:
-    Description: "ARN of the SQS queue for registration processing"
-    Value: !GetAtt RegisterQueue.Arn
+  SlashCommandQueueArn:
+    Description: "ARN of the SQS queue for slash command processing"
+    Value: !GetAtt SlashCommandQueue.Arn
 
   PopulateDirectorEducationCronFunction:
     Description: "Lambda function ARN for daily director education cron job"
     Value: !GetAtt PopulateDirectorEducationCron.Arn
     
   PopulateDirectorStockBlocksCronFunction:
-    Description: "Lambda function ARN for daily director education cron job"
+    Description: "Lambda function ARN for daily director stock blocks cron job"
     Value: !GetAtt PopulateDirectorStockBlocksCron.Arn
 
   PopulateDirectorEducationCronFunctionName:
@@ -167,4 +166,3 @@ Outputs:
   PopulateDirectorStockBlocksCronFunctionName:
     Description: "Lambda function name"
     Value: !Ref PopulateDirectorStockBlocksCron
-
