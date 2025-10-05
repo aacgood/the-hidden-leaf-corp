@@ -79,6 +79,7 @@ Hows the best way of dealing with this? point in time? or keep historical?
 - intelligence	(from employees: company_employees.<ID>.intelligence)
 - endurance	(from employees: company_employees.<ID>.endurance)
 - addiction	(from employees: company_employees.<ID>.effectiveness.addiction)
+- allowable_addition (caluculated)
 - effectiveness (from employees: company_employees.<ID>.effectiveness.total)
 - inactivity	(will need to see that in the logs)
 - demerit	[26/09/2025, 10/10/2025,] > maybe its own table?
