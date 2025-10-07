@@ -22,6 +22,12 @@ sam local invoke PopulateDirectorStockBlocksCron --event src/cron/sample_event.j
 sam local invoke PopulateEmployeesCron --event src/cron/sample_event.json
 ```
 
+### Daily Report Employees
+
+```sh
+sam local invoke DailyReportEmployeesCron --event src/cron/sample_event.json
+```
+
 ## SAM Deployment
 
 These are setup as a cron at 17:00 UTC.

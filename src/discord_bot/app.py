@@ -10,6 +10,20 @@ DISCORD_API_BASE = "https://discord.com/api/v10/interactions"
 
 SLASH_COMMAND_QUEUE_URL = os.environ.get("SLASH_COMMAND_QUEUE_URL")
 
+# Roles
+ROLE_AN_STORE_ADMIN = 1424612035555098716
+ROLE_MUSIC_STORE_ADMIN = 1419803622631543046
+ROLE_SERVER_ADMIN = 1419804995532099624
+ROLE_JONIN = 1419589117938761839
+ROLE_ANBU = 1423550306243055627
+ROLE_HOCKAGE = 1423558170621640764
+
+# Channels
+CHANNEL_AN_STORE_REPORTS = 1424626226349346918
+CHANNEL_AN_STORE_ADMIN = 1424625414722293790
+CHANNEL_MUSIC_STORE_REPORTS = 1419804361248215131
+CHANNEL_MUSIC_STORE_ADMIN = 1419803970649722992
+
 sqs_client = boto3.client("sqs")
 
 def get_secrets():
@@ -83,6 +97,39 @@ def lambda_handler(event, context):
             }
 
         elif command_name == "register":
+
+            user_roles = {int(r) for r in payload["member"]["roles"]}
+            channel_id = int(payload["channel"]["id"])
+
+            # --- Early Rejection
+            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_ADMIN, ROLE_MUSIC_STORE_ADMIN}
+            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_ADMIN, CHANNEL_MUSIC_STORE_ADMIN}
+
+            print("User roles:", user_roles)
+            print("ALLOWED_ROLES:", ALLOWED_ROLES)
+            print("Channel ID:", channel_id)
+            print("ALLOWED_CHANNELS:", ALLOWED_CHANNELS)
+            print("Role intersection:", user_roles.intersection(ALLOWED_ROLES))
+
+            if not user_roles.intersection(ALLOWED_ROLES):
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 You don’t have permission to use `/register`.", "flags": 64}
+                    })
+                }
+
+            if channel_id not in ALLOWED_CHANNELS:
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 `/register` cannot be used in this channel.", "flags": 64}
+                    })
+                }
             # --- Immediately defer response ---
             defer_response = {"type": 5}  # DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
 
@@ -108,21 +155,56 @@ def lambda_handler(event, context):
             }
 
         elif command_name == "link":
+
+            user_roles = {int(r) for r in payload["member"]["roles"]}
+            channel_id = int(payload["channel"]["id"])
+
+            # --- Early Rejection
+            ALLOWED_ROLES = {ROLE_SERVER_ADMIN}
+            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_REPORTS, CHANNEL_MUSIC_STORE_REPORTS}
+
+            if not user_roles.intersection(ALLOWED_ROLES):
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 You don’t have permission to use `/link`.", "flags": 64}
+                    })
+                }
+
+            if channel_id not in ALLOWED_CHANNELS:
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 `/link` cannot be used in this channel.", "flags": 64}
+                    })
+                }
+
             # --- Immediately defer response ---
             defer_response = {"type": 5}  # DEFERRED_CHANNEL_MESSAGE_WITH_SOURCE
+
 
             company_id = next(
                 (opt["value"] for opt in payload["data"]["options"] if opt["name"] == "company_id"),
                 None
             )
 
+            discord_webhook_url = next(
+                (opt["value"] for opt in payload["data"]["options"] if opt["name"] == "webhook_url"),
+                None
+            )
+
             discord_channel_id = payload["channel"]["id"]
-            channel_name = payload["channel"]["name"]  # <-- human-friendly label
+            channel_name = payload["channel"]["name"]  
 
             message_body = {
                 "command_name": "link",
                 "payload": payload,                      # <--- include full interaction payload
                 "company_id": company_id,
+                "discord_webhook_url": discord_webhook_url, 
                 "discord_channel_id": discord_channel_id,
                 "channel_name": channel_name
             }

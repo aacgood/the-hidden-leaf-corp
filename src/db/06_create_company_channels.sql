@@ -1,8 +1,9 @@
 CREATE TABLE discord_company_channels (
     id BIGSERIAL PRIMARY KEY,
     company_id BIGINT NOT NULL,
-    channel_name TEXT NOT NULL, 
+    channel_name TEXT NOT NULL,
     discord_channel_id BIGINT NOT NULL,
+    discord_webhook_url TEXT,
     UNIQUE (company_id, channel_name)
 );
 

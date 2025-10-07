@@ -16,35 +16,52 @@ DISCORD_APPLICATION_ID = json.loads(secrets['SecretString'])['DISCORD_APPLICATIO
 COMMANDS = [
     {
         "name": "ping",
-        "description": "replies with pong!"
+        "description": "replies with pong!",
+        "default_member_permissions": None,  # everyone can see
+        "dm_permission": False
     },
     {
         "name": "register",
-        "description": "register Company Director API Key",
+        "description": "Register a company director API key",
+        "default_member_permissions": None,  # visible to everyone, Lambda will enforce role/channel
+        "dm_permission": False,
         "options": [
             {
                 "name": "api_key",
-                "description": "Company API Key",
-                "type": 3, #string
-                "required": True
-            }
-        ]
+                "description": "Director API Key",
+                "type": 3,  # string
+                "required": True,
+            },
+        ],
     },
     {
         "name": "link",
-        "description": "link a Torn company to this Discord channel",
+        "description": "link a Torn company ID to this Discord channel",
+        "default_member_permissions": None,  # visible to everyone
+        "dm_permission": False,
         "options": [
             {
                 "name": "company_id",
                 "description": "Company ID to link",
                 "type": 4,  # integer
                 "required": True
-            }
+            },
+            {
+                "name": "webhook_url",
+                "description": "Discord webhook URL for this channel",
+                "type": 3,  # string
+                "required": True,
+            },
         ]
     }
 ]
 
-URL = f"https://discord.com/api/v10/applications/{DISCORD_APPLICATION_ID}/commands"
+# Guild only
+GUILD_ID = "1419520053971517633"
+URL = f"https://discord.com/api/v10/applications/{DISCORD_APPLICATION_ID}/guilds/{GUILD_ID}/commands"
+
+# Global
+#URL = f"https://discord.com/api/v10/applications/{DISCORD_APPLICATION_ID}/commands"
 
 headers = {
     "Authorization": f"Bot {DISCORD_BOT_TOKEN}",

@@ -81,7 +81,7 @@ def process_register(payload):
     """
     Performs Torn API lookup, Supabase upsert, and sends final Discord follow-up message
     """
-    #print(payload)
+    print(payload)
     api_key = payload["data"]["options"][0]["value"]
     user_nick = payload["member"].get("nick") #or payload["member"]["user"]["username"]
     interaction_token = payload["token"]

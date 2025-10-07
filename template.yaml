@@ -156,6 +156,32 @@ Resources:
             Description: "Runs PopulateEmployeesCron once daily at 17:00 UTC"
             Enabled: true
 
+  DailyReportEmployeesCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/cron/
+      Handler: daily_report_employees.lambda_handler
+      Runtime: python3.12
+      Timeout: 30
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action:
+                - "secretsmanager:GetSecretValue"
+              Resource:
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 17 * * ? *)
+            Name: DailyReportEmployeesJob
+            Description: "Runs DailyReportEmployeesCron once daily at 17:00 UTC"
+            Enabled: true
+
 Outputs:
   DiscordApi:
     Description: "API Gateway endpoint URL for Prod stage for Discord interactions"
@@ -188,6 +214,10 @@ Outputs:
   PopulateEmployeesCronFunction:
     Description: "Lambda function ARN for daily director stock blocks cron job"
     Value: !GetAtt PopulateEmployeesCron.Arn
+
+  DailyReportEmployeesCronFunction:
+    Description: "Lambda function ARN for daily report cron job"
+    Value: !GetAtt DailyReportEmployeesCron.Arn
 
   PopulateDirectorEducationCronFunctionName:
     Description: "Lambda function name"
