@@ -22,11 +22,25 @@ sam local invoke PopulateDirectorStockBlocksCron --event src/cron/sample_event.j
 sam local invoke PopulateEmployeesCron --event src/cron/sample_event.json
 ```
 
+### Daily Company Stock
+
+```sh
+sam local invoke DailyCompanyStockCron --event src/cron/sample_event.json
+```
+
 ### Daily Report Employees
 
 ```sh
 sam local invoke DailyReportEmployeesCron --event src/cron/sample_event.json
 ```
+
+### Daily Report Stock
+
+```sh
+sam local invoke DailyReportStockCron --event src/cron/sample_event.json
+```
+
+
 
 ## SAM Deployment
 

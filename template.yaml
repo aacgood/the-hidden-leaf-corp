@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  Discord Bot Lambda (Serverless)
+  Discord Bot and Torn Company Cron Jobs (Serverless Stack)
 
 Globals:
   Function:
@@ -17,17 +17,16 @@ Resources:
     Properties:
       CodeUri: src/discord_bot/
       Handler: app.lambda_handler
-      Runtime: python3.12
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
               Action:
-                - "secretsmanager:GetSecretValue"
-                - "sqs:SendMessage"
-              Resource: 
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
+                - secretsmanager:GetSecretValue
+                - sqs:SendMessage
+              Resource:
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
                 - !GetAtt SlashCommandQueue.Arn
       Environment:
         Variables:
@@ -51,25 +50,24 @@ Resources:
     Properties:
       CodeUri: src/discord_bot/
       Handler: slash_command_worker.lambda_handler
-      Runtime: python3.12
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
               Action:
-                - "secretsmanager:GetSecretValue"
+                - secretsmanager:GetSecretValue
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-            
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+
             - Effect: "Allow"
               Action:
-                - "secretsmanager:GetSecretValue"
-                - "secretsmanager:CreateSecret"
-                - "secretsmanager:UpdateSecret"
-                - "secretsmanager:ReplicateSecretToRegions"
+                - secretsmanager:GetSecretValue
+                - secretsmanager:CreateSecret
+                - secretsmanager:UpdateSecret
+                - secretsmanager:ReplicateSecretToRegions
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
       Events:
         SlashCommandQueueEvent:
           Type: SQS
@@ -83,25 +81,23 @@ Resources:
     Properties:
       CodeUri: src/cron/
       Handler: populate_director_education.lambda_handler
-      Runtime: python3.12
       Timeout: 30
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Action:
-                - "secretsmanager:GetSecretValue"
+              Action: secretsmanager:GetSecretValue
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
             Schedule: cron(0 17 * * ? *)
             Name: DailyDirectorEducationJob
-            Description: "Runs PopulateDirectorEducationCron once daily at 17:00 UTC"
+            Description: Runs PopulateDirectorEducationCron once daily at 17:00 UTC
             Enabled: true
 
   PopulateDirectorStockBlocksCron:
@@ -109,25 +105,23 @@ Resources:
     Properties:
       CodeUri: src/cron/
       Handler: populate_director_stock_blocks.lambda_handler
-      Runtime: python3.12
       Timeout: 30
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Action:
-                - "secretsmanager:GetSecretValue"
+              Action: secretsmanager:GetSecretValue
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
             Schedule: cron(0 17 * * ? *)
             Name: DailyDirectorStockBlocksJob
-            Description: "Runs DirectorStockBlocksCron once daily at 17:00 UTC"
+            Description: Runs PopulateDirectorStockBlocksCron once daily at 17:00 UTC
             Enabled: true
 
   PopulateEmployeesCron:
@@ -135,25 +129,23 @@ Resources:
     Properties:
       CodeUri: src/cron/
       Handler: populate_employees.lambda_handler
-      Runtime: python3.12
       Timeout: 30
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Action:
-                - "secretsmanager:GetSecretValue"
+              Action: secretsmanager:GetSecretValue
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
             Schedule: cron(0 17 * * ? *)
             Name: DailyEmployeesJob
-            Description: "Runs PopulateEmployeesCron once daily at 17:00 UTC"
+            Description: Runs PopulateEmployeesCron once daily at 17:00 UTC
             Enabled: true
 
   DailyReportEmployeesCron:
@@ -161,72 +153,114 @@ Resources:
     Properties:
       CodeUri: src/cron/
       Handler: daily_report_employees.lambda_handler
-      Runtime: python3.12
       Timeout: 30
       Policies:
         - Version: "2012-10-17"
           Statement:
             - Effect: "Allow"
-              Action:
-                - "secretsmanager:GetSecretValue"
+              Action: secretsmanager:GetSecretValue
               Resource:
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:discord_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:supabase_keys-*"
-                - !Sub "arn:aws:secretsmanager:ap-southeast-1:${AWS::AccountId}:secret:torn_director_api_keys-*"
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
       Events:
         DailySchedule:
           Type: Schedule
           Properties:
             Schedule: cron(0 17 * * ? *)
             Name: DailyReportEmployeesJob
-            Description: "Runs DailyReportEmployeesCron once daily at 17:00 UTC"
+            Description: Runs DailyReportEmployeesCron once daily at 17:00 UTC
+            Enabled: true
+
+  DailyReportStockCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/cron/
+      Handler: daily_report_stock.lambda_handler
+      Timeout: 30
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: secretsmanager:GetSecretValue
+              Resource:
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 17 * * ? *)
+            Name: DailyReportStockJob
+            Description: Runs DailyReportStockCron once daily at 17:00 UTC
+            Enabled: true
+
+  DailyCompanyStockCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/cron/
+      Handler: populate_company_stock.lambda_handler
+      Timeout: 30
+      Policies:
+        - Version: "2012-10-17"
+          Statement:
+            - Effect: "Allow"
+              Action: secretsmanager:GetSecretValue
+              Resource:
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
+                - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 17 * * ? *)
+            Name: DailyCompanyStockJob
+            Description: Runs DailyCompanyStockCron once daily at 17:00 UTC
             Enabled: true
 
 Outputs:
   DiscordApi:
-    Description: "API Gateway endpoint URL for Prod stage for Discord interactions"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/interactions"
-    
-  DiscordBotFunction:
-    Description: "Lambda Function ARN"
+    Description: API Gateway endpoint URL for Discord interactions
+    Value: !Sub https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/interactions
+
+  DiscordBotFunctionArn:
+    Description: Lambda Function ARN
     Value: !GetAtt DiscordBotFunction.Arn
 
-  DiscordBotFunctionIamRole:
-    Description: "IAM Role for Lambda function"
+  DiscordBotFunctionRole:
+    Description: IAM Role for Lambda function
     Value: !GetAtt DiscordBotFunctionRole.Arn
 
   SlashCommandQueueUrl:
-    Description: "URL of the SQS queue for slash command processing"
+    Description: URL of the SQS queue for slash command processing
     Value: !Ref SlashCommandQueue
 
   SlashCommandQueueArn:
-    Description: "ARN of the SQS queue for slash command processing"
+    Description: ARN of the SQS queue for slash command processing
     Value: !GetAtt SlashCommandQueue.Arn
 
-  PopulateDirectorEducationCronFunction:
-    Description: "Lambda function ARN for daily director education cron job"
+  PopulateDirectorEducationCronArn:
+    Description: Lambda function ARN for daily director education cron job
     Value: !GetAtt PopulateDirectorEducationCron.Arn
-    
-  PopulateDirectorStockBlocksCronFunction:
-    Description: "Lambda function ARN for daily director stock blocks cron job"
+
+  PopulateDirectorStockBlocksCronArn:
+    Description: Lambda function ARN for daily director stock blocks cron job
     Value: !GetAtt PopulateDirectorStockBlocksCron.Arn
 
-  PopulateEmployeesCronFunction:
-    Description: "Lambda function ARN for daily director stock blocks cron job"
+  PopulateEmployeesCronArn:
+    Description: Lambda function ARN for daily employees cron job
     Value: !GetAtt PopulateEmployeesCron.Arn
 
-  DailyReportEmployeesCronFunction:
-    Description: "Lambda function ARN for daily report cron job"
+  DailyReportEmployeesCronArn:
+    Description: Lambda function ARN for daily report cron job
     Value: !GetAtt DailyReportEmployeesCron.Arn
 
-  PopulateDirectorEducationCronFunctionName:
-    Description: "Lambda function name"
-    Value: !Ref PopulateDirectorEducationCron
+  DailyReportStockCronArn:
+    Description: Lambda function ARN for daily stock cron job
+    Value: !GetAtt DailyReportStockCron.Arn
 
-  PopulateDirectorStockBlocksCronFunctionName:
-    Description: "Lambda function name"
-    Value: !Ref PopulateDirectorStockBlocksCron
-
-  PopulateEmployeesCronFunctionName:
-    Description: "Lambda function name"
-    Value: !Ref PopulateEmployeesCron
+  DailyCompanyStockCronArn:
+    Description: Lambda function ARN for daily company stock cron job
+    Value: !GetAtt DailyCompanyStockCron.Arn
