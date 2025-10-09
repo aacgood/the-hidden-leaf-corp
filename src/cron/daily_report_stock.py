@@ -6,7 +6,6 @@ from supabase import create_client, Client
 from datetime import datetime, timezone
 
 REGION = "ap-southeast-1"
-MAX_STOCK = 100_000
 
 
 def get_secrets():
@@ -55,7 +54,7 @@ def format_generated_timestamp() -> str:
     return s
 
 
-def build_stock_report(rows: list[dict]) -> str:
+def build_stock_report(rows: list[dict], max_stock: int) -> str:
     """
     Build a Discord-ready stock report table.
     """
@@ -97,7 +96,7 @@ def build_stock_report(rows: list[dict]) -> str:
         total_on_order += on_order
 
         daily_sales_pct = (sold_amount / total_sold) if total_sold > 0 else 0
-        optimal = round(daily_sales_pct * MAX_STOCK)
+        optimal = round(daily_sales_pct * max_stock)
 
         # Icon logic
         icon = "✅"
@@ -111,12 +110,12 @@ def build_stock_report(rows: list[dict]) -> str:
         days_display = f"{days}d" if days is not None else "-"
         table_lines.append(f"{icon} {name:<18} {in_stock:>6} {sold_amount:>6} {on_order:>6} {days_display:>6} {optimal:>8}")
 
-    available_to_order = MAX_STOCK - (total_in_stock + total_on_order)
+    available_to_order = max_stock - (total_in_stock + total_on_order)
     if available_to_order < 0:
         available_to_order = 0
 
     table_lines.append("```")
-    table_lines.append(f"\n📦 There are {available_to_order} items available to order.")
+    table_lines.append(f"\n📦 There are {available_to_order} items available to order (of {max_stock:,} total capacity).")
 
     return header + "\n".join(table_lines)
 
@@ -141,6 +140,21 @@ def lambda_handler(event=None, context=None):
             print(f"No webhook for company {company_id}, skipping")
             continue
 
+        # Fetch the company's current storage capacity (max_stock)
+        try:
+            company_info = (
+                supabase.table("company")
+                .select("storage_space")
+                .eq("company_id", company_id)
+                .single()
+                .execute()
+                .data
+            )
+            max_stock = int(company_info.get("storage_space", 100000)) if company_info else 100000
+        except Exception as e:
+            print(f"Error fetching storage_space for company {company_id}: {e}")
+            max_stock = 100000
+
         try:
             rows = supabase.table("company_stock_daily").select(
                 "item_name,in_stock,on_order,sold_amount,estimated_remaining_days"
@@ -153,14 +167,11 @@ def lambda_handler(event=None, context=None):
             print(f"No stock rows for company {company_id} on {utc_today}, skipping")
             continue
 
-        message = build_stock_report(rows)
+        message = build_stock_report(rows, max_stock)
         full_message = f"{message}"
 
-        # Temporary override for testing
-        discord_webhook_url = "https://discord.com/api/webhooks/1425300955481636977/jHhYH1mJTjaYQX9H4hUcq-dwWFrDoWPIwLWjXLMpqhc4xZXKsa3Xurj5SJ999Y9wHuWY"
-
         send_discord_message(discord_webhook_url, full_message)
-        print(f"Sent stock report for company {company_id}")
+        print(f"Sent stock report for company {company_name} (max_stock={max_stock})")
 
     print("Daily stock report job completed.")
 

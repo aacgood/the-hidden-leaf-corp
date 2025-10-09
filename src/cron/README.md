@@ -22,10 +22,20 @@ sam local invoke PopulateDirectorStockBlocksCron --event src/cron/sample_event.j
 sam local invoke PopulateEmployeesCron --event src/cron/sample_event.json
 ```
 
-### Daily Company Stock
+### Populate Company
 
 ```sh
-sam local invoke DailyCompanyStockCron --event src/cron/sample_event.json
+sam local invoke PopulateCompanyCron --event src/cron/sample_event.json
+```
+
+### Populate Company Stock
+
+Purpose: Read TORN API and get the stock figures as a point in time and update the db
+Filename: `src/cron/populate_company_stock.py`
+Table: `company_stock_daily`
+
+```sh
+sam local invoke PopulateCompanyStockCron --event src/cron/sample_event.json
 ```
 
 ### Daily Report Employees
