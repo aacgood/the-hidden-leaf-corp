@@ -2,6 +2,7 @@ CREATE TABLE company (
     company_id INTEGER PRIMARY KEY,
     torn_user_id INTEGER NOT NULL,
     company_name TEXT NOT NULL,
+    company_acronym VARCHAR(10) UNIQUE,
     company_type INTEGER,          -- from profile
     popularity INTEGER,
     efficiency INTEGER,
@@ -14,5 +15,8 @@ CREATE TABLE company (
     last_updated TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
+-- INDEX
+CREATE INDEX idx_company_acronym ON company (company_acronym);
 
+-- RLS
 ALTER TABLE company ENABLE ROW LEVEL SECURITY;

@@ -101,7 +101,7 @@ Resources:
             Queue: !GetAtt SlashCommandQueue.Arn
             BatchSize: 1
 
-  # --- CRON jobs for populating the DB ---
+# --- CRON jobs for populating the DB ---
 
   # --- Non-critical Cron Jobs (can run earlier) ---
   PopulateDirectorEducationCron:
@@ -169,6 +169,22 @@ Resources:
             Description: Post-rollover stock snapshot at 18:30 UTC
             Enabled: true
 
+  PopulateCompanyFinancialsCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/
+      Handler: populate_company_financials.lambda_handler
+      Timeout: 30
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(30 18 * * ? *)
+            Name: PopulateCompanyFinancialsJob
+            Description: Post-rollover company financials snapshot at 18:30 UTC
+            Enabled: true
+
   DailyReportStockCron:
     Type: AWS::Serverless::Function
     Properties:
@@ -217,7 +233,6 @@ Resources:
             Name: DailyReportEmployeesJob
             Description: Employee report at 17:15 UTC
             Enabled: true
-
 
 Outputs:
 
@@ -272,3 +287,7 @@ Outputs:
   PopulateCompanyStockCronArn:
     Description: Lambda function ARN for populating daily company stock cron job
     Value: !GetAtt PopulateCompanyStockCron.Arn
+
+  PopulateCompanyFinancialsCronArn:
+    Description: Lambda function ARN for populating daily company financials cron job
+    Value: !GetAtt PopulateCompanyFinancialsCron.Arn

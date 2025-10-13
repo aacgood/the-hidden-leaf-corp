@@ -13,6 +13,7 @@ SLASH_COMMAND_QUEUE_URL = os.environ.get("SLASH_COMMAND_QUEUE_URL")
 # Roles
 ROLE_AN_STORE_ADMIN = 1424612035555098716
 ROLE_MUSIC_STORE_ADMIN = 1419803622631543046
+ROLE_ZERODB_STORE_ADMIN = 1427104006617960489
 ROLE_SERVER_ADMIN = 1419804995532099624
 ROLE_JONIN = 1419589117938761839
 ROLE_ANBU = 1423550306243055627
@@ -23,6 +24,8 @@ CHANNEL_AN_STORE_REPORTS = 1424626226349346918
 CHANNEL_AN_STORE_ADMIN = 1424625414722293790
 CHANNEL_MUSIC_STORE_REPORTS = 1419804361248215131
 CHANNEL_MUSIC_STORE_ADMIN = 1419803970649722992
+CHANNEL_ZERODB_STORE_ADMIN = 1427104434613256312
+CHANNEL_ZERODB_STORE_REPORTS = 1427104495787049156
 
 sqs_client = boto3.client("sqs")
 
@@ -86,7 +89,8 @@ def lambda_handler(event, context):
 
     # Slash commands
     if payload["type"] == 2:
-        command_name = payload["data"]["name"]
+        data = payload.get("data", {})
+        command_name = data.get("name")
 
         if command_name == "ping":
             response = handle_ping(payload)
@@ -102,8 +106,8 @@ def lambda_handler(event, context):
             channel_id = int(payload["channel"]["id"])
 
             # --- Early Rejection
-            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_ADMIN, ROLE_MUSIC_STORE_ADMIN}
-            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_ADMIN, CHANNEL_MUSIC_STORE_ADMIN}
+            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_ADMIN, ROLE_MUSIC_STORE_ADMIN, ROLE_ZERODB_STORE_ADMIN}
+            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_ADMIN, CHANNEL_MUSIC_STORE_ADMIN, CHANNEL_ZERODB_STORE_ADMIN}
 
             print("User roles:", user_roles)
             print("ALLOWED_ROLES:", ALLOWED_ROLES)
@@ -161,7 +165,7 @@ def lambda_handler(event, context):
 
             # --- Early Rejection
             ALLOWED_ROLES = {ROLE_SERVER_ADMIN}
-            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_REPORTS, CHANNEL_MUSIC_STORE_REPORTS}
+            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_REPORTS, CHANNEL_MUSIC_STORE_REPORTS, CHANNEL_ZERODB_STORE_REPORTS}
 
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
@@ -223,6 +227,84 @@ def lambda_handler(event, context):
                 "headers": {"Content-Type": "application/json"},
                 "body": json.dumps(defer_response)
             }
+
+        elif command_name == "company":
+            user_roles = {int(r) for r in payload["member"]["roles"]}
+            options = data.get("options", [])
+
+            # --- Early Rejection
+            ALLOWED_ROLES = {ROLE_HOCKAGE, ROLE_ANBU, ROLE_JONIN}
+
+            if not user_roles.intersection(ALLOWED_ROLES):
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 You don’t have permission to use `/company`.", "flags": 64}
+                    })
+                }
+            
+            # --- DEFER RESPONSE ---
+            defer_response = {"type": 5}
+
+            # Support arbitrary nesting: subcommand groups -> subcommands -> options
+            normalized_parts = [command_name]
+            normalized_options = None
+
+            # Walk down the first-option chain while it's a subcommand/group
+            while options:
+                first_option = options[0]
+                opt_type = first_option.get("type")
+                # type 1 = subcommand, type 2 = subcommand group
+                if opt_type in (1, 2):
+                    sub_name = first_option.get("name")
+                    normalized_parts.append(sub_name)
+                    # drill into next-level options (could be the params)
+                    options = first_option.get("options", [])
+                    normalized_options = options  # params for the final subcommand
+                else:
+                    # Not a subcommand/group, stop
+                    normalized_options = options
+                    break
+
+            # Build final flattened command name, e.g. company_donate or company_finance_donate
+            command_name = "_".join(normalized_parts)
+
+            # If we found params/options for the subcommand, replace payload.data.options
+            # so downstream logic (that expects payload["data"]["options"]) continues to work.
+            if normalized_options is not None:
+                payload["data"]["options"] = normalized_options
+            else:
+                # ensure an empty list if no options to avoid KeyErrors later
+                payload["data"]["options"] = []
+
+            # --- PUSH TO SQS ---
+            message_body = {
+                "command_name": command_name,
+                "payload": payload,
+                "initiator_id": payload["member"]["user"]["id"]
+            }
+
+            try:
+                sqs_client.send_message(
+                    QueueUrl=SLASH_COMMAND_QUEUE_URL,
+                    MessageBody=json.dumps(message_body)
+                )
+                print(f"Payload for {command_name} pushed to SQS: {message_body}")
+            except Exception as e:
+                print(f"Error pushing {command_name} to SQS: {e}")
+
+            return {
+                "statusCode": 200,
+                "headers": {"Content-Type": "application/json"},
+                "body": json.dumps(defer_response)
+            }
+
+        # Debug
+        print(f"Normalized command name: {command_name}")
+        print(f"Payload: {payload}")
+
 
     # Unknown interaction
     return {

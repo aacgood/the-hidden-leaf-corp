@@ -102,9 +102,9 @@ def build_stock_report(rows: list[dict], max_stock: int) -> str:
         icon = "✅"
         if (days is not None) and (days <= 7):
             icon = "‼️"
-        elif optimal > 0 and in_stock < optimal * 0.3:
+        elif optimal > 0 and in_stock < optimal * 0.1:
             icon = "🚨"
-        elif optimal > 0 and in_stock < optimal * 0.6:
+        elif optimal > 0 and in_stock < optimal * 0.25:
             icon = "⚠️"
 
         days_display = f"{days}d" if days is not None else "-"

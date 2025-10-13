@@ -39,15 +39,6 @@ def shorten(text: str, max_len: int = 9) -> str:
     return text if len(text) <= max_len else text[:max_len - 1] + "…"
 
 def build_employee_table(employees: list[dict]) -> str:
-    """
-    Build a Discord-friendly Markdown table with emoji indicators.
-    - ✅ Efficiency >= 100
-    - ❌ Efficiency < 80
-    - ⚪ Otherwise
-    - ❌ Addiction < -5
-    - ✅ Addiction >= 0
-    - ⚪ Otherwise
-    """
 
     # Timestamp
     utc_now = datetime.now(timezone.utc)
@@ -56,7 +47,7 @@ def build_employee_table(employees: list[dict]) -> str:
     # Sort by efficiency descending, then addiction ascending
     employees_sorted = sorted(
         employees,
-        key=lambda e: (-e.get('effectiveness_total', 0), e.get('addiction', 0))
+        key=lambda e: (-e.get('effectiveness_total', 0), e.get('allowable_addiction', 0))
     )
 
     header = f"{'Name (Position)':<27}{'Efficiency':<12}{'Addiction':<7}"
@@ -65,6 +56,7 @@ def build_employee_table(employees: list[dict]) -> str:
     for emp in employees_sorted:
         eff = emp.get('effectiveness_total', 0)
         addict = emp.get('addiction', 0)
+        allowable_addict = emp.get('allowable_addiction', 0)
         name = emp.get('employee_name', '')
         pos = shorten(emp.get('position', ''), 9)
 
@@ -77,12 +69,10 @@ def build_employee_table(employees: list[dict]) -> str:
             eff_icon = "⚪"
 
         # Addiction icon
-        if addict < -5:
+        if addict < allowable_addict:
             addict_icon = "❌"
-        elif addict >= 0:
-            addict_icon = "✅"
         else:
-            addict_icon = "⚪"
+            addict_icon = "✅"
 
         lines.append(
             f"{name} ({pos})".ljust(27) +

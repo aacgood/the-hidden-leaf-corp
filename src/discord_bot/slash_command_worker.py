@@ -2,7 +2,7 @@
 import json
 import boto3
 from register_worker import process_register
-# from company_channels import process_link_company   # (future extension)
+
 
 def lambda_handler(event, context):
     """
@@ -16,13 +16,39 @@ def lambda_handler(event, context):
 
         print(f"Router received command: {command}")
 
+        if not command:
+            print("⚠️ Missing command_name in message, skipping")
+            continue
+
         if command == "register":
-            import register_worker  # or from _commands.register_worker import process_register
-            register_worker.process_register(payload)
+            try:    
+                import register_worker  # or from _commands.register_worker import process_register
+                register_worker.process_register(payload)
+            except Exception as e:
+                print(f"❌ Error processing register: {e}")
 
         elif command == "link":
-            from _commands.company_channels import handle_link_company
-            handle_link_company(msg)
+            try:
+                from _commands.company_channels import handle_link_company
+                handle_link_company(msg)
+            except Exception as e:
+                print(f"❌ Error processing link: {e}")
+
+        elif command == "company_donate":
+            print("company_donate")
+            try:
+                from _commands.company_donate import handle_company_donate
+                handle_company_donate(msg)
+            except Exception as e:
+                print(f"❌ Error processing company_donate: {e}")
+
+        elif command == "company_repay":
+            print("company_repay")
+            try:
+                from _commands.company_repay import handle_company_repay
+                handle_company_repay(msg)
+            except Exception as e:
+                print(f"❌ Error processing company_donate: {e}")
 
         else:
             print(f"⚠️ Unhandled command: {command}")

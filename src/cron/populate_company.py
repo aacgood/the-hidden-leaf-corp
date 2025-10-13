@@ -110,6 +110,7 @@ def lambda_handler(event, context):
             )
             resp.raise_for_status()
             data = resp.json()
+            print(data)
 
             company = data.get("company", {})
             company_details = data.get("company_detailed", {})

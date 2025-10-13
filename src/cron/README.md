@@ -38,6 +38,16 @@ Table: `company_stock_daily`
 sam local invoke PopulateCompanyStockCron --event src/cron/sample_event.json
 ```
 
+### Populate Company Financials
+
+Purpose: Read TORN API and get the stock figures as a point in time and update the db
+Filename: `src/cron/populate_company_financials.py`
+Table: `company_financials`
+
+```sh
+sam local invoke PopulateCompanyFinancialsCron --event src/cron/sample_event.json
+```
+
 ### Daily Report Employees
 
 ```sh
