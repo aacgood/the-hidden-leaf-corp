@@ -60,6 +60,35 @@ sam local invoke DailyReportEmployeesCron --event src/cron/sample_event.json
 sam local invoke DailyReportStockCron --event src/cron/sample_event.json
 ```
 
+### Daily Report Company (Long Form)
+
+```sh
+sam local invoke DailyReportCompanyLongCron --event src/cron/sample_event.json
+```
+
+### Weekly Report Company Aggregated (Long Form)
+
+```sh
+sam local invoke WeeklyReportCompanyLongCron --event src/cron/sample_event.json
+```
+
+### Weekly Report Company Invetments Aggregated (Long Form)
+
+```sh
+sam local invoke WeeklyReportCompanyInvestmentsLongCron --event src/cron/sample_event.json
+```
+
+### Daily Report All Employees (Long Form)
+
+```sh
+sam local invoke DailyReportAllEmployeesLongCron --event src/cron/sample_event.json
+```
+
+### Weekly Report Directors Stock Blocks (Long Form)
+
+```sh
+sam local invoke WeeklyReportDirectorsStockBlocksLongCron --event src/cron/sample_event.json
+```
 
 
 ## SAM Deployment

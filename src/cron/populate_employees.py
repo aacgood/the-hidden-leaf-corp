@@ -82,7 +82,7 @@ def process_employees(supabase: Client, director_torn_id: int, company_id, emplo
             "director_education": emp["effectiveness"].get("director_education", 0),
             "management": emp["effectiveness"].get("management", 0),
             "addiction": emp["effectiveness"].get("addiction", 0),
-            "inactivity": emp.get("inactivity", 0),  # only exists if there in inactivity on emp - will actually need to see this to code for it.
+            "inactivity": emp["effectiveness"].get("inactivity", 0),
             "allowable_addiction": calculate_allowable_addiction(emp["effectiveness"].get("merits", 0))
         })
 

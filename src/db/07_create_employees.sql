@@ -30,3 +30,8 @@ CREATE TABLE employees (
 
 -- RLS
 ALTER TABLE employees ENABLE ROW LEVEL SECURITY;
+
+-- FK
+ALTER TABLE public.employees
+ADD CONSTRAINT fk_employees_company
+FOREIGN KEY (company_id) REFERENCES public.company(company_id);

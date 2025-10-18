@@ -53,12 +53,15 @@ def build_employee_table(employees: list[dict]) -> str:
     header = f"{'Name (Position)':<27}{'Efficiency':<12}{'Addiction':<7}"
     lines = [header, "-" * len(header)]
 
+    inactive_list = []
+
     for emp in employees_sorted:
         eff = emp.get('effectiveness_total', 0)
         addict = emp.get('addiction', 0)
         allowable_addict = emp.get('allowable_addiction', 0)
         name = emp.get('employee_name', '')
         pos = shorten(emp.get('position', ''), 9)
+        inactivity = emp.get('inactivity', 0)
 
         # Efficiency icon
         if eff >= 100:
@@ -74,6 +77,13 @@ def build_employee_table(employees: list[dict]) -> str:
         else:
             addict_icon = "✅"
 
+        # Find inactive employees (inactivity < 0)
+        inactive_employees = [
+            (emp["employee_name"], emp.get("inactivity", 0))
+            for emp in employees_sorted
+            if emp.get("inactivity", 0) < 0
+        ]
+
         lines.append(
             f"{name} ({pos})".ljust(27) +
             f"{eff_icon} {eff:<9}" +
@@ -81,6 +91,7 @@ def build_employee_table(employees: list[dict]) -> str:
         )
 
     timestamp_line = f" ({utc_now.strftime('%Y-%m-%d %H:%M:%S TCT')})"
+    
     
     # --- Build the final message ---
     table_block = "```\n" + "\n".join(lines) + "\n```"
@@ -90,6 +101,14 @@ def build_employee_table(employees: list[dict]) -> str:
         f"{timestamp_line}\n\n"
         f"{table_block}"
     )
+    
+    # Append inactivity warning(s)
+    if inactive_employees:
+        for name, inactivity in inactive_employees:
+            table += (
+                f"\n\n‼️{name} is currently inactive (inactivity {inactivity}). "
+                f"Add a strike and prepare to replace."
+            )
 
     return table
 
@@ -113,7 +132,7 @@ def lambda_handler(event=None, context=None):
         # Get all employees for this company
         try:
             employees = supabase.table("employees").select(
-                "employee_name, position, effectiveness_total, addiction, allowable_addiction"
+                "employee_name, position, effectiveness_total, addiction, allowable_addiction","inactivity"
             ).eq("company_id", company_id).execute().data
         except Exception as e:
             print(f"Error fetching employees for company {company_id}: {e}")

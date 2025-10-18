@@ -34,22 +34,29 @@ def lambda_handler(event, context):
             except Exception as e:
                 print(f"❌ Error processing link: {e}")
 
-        elif command == "company_donate":
-            print("company_donate")
+        elif command == "company_invest":
+            print("company_invest")
             try:
-                from _commands.company_donate import handle_company_donate
-                handle_company_donate(msg)
+                from _commands.company_invest import handle_company_invest
+                handle_company_invest(msg)
             except Exception as e:
-                print(f"❌ Error processing company_donate: {e}")
+                print(f"❌ Error processing company_invest: {e}")
 
-        elif command == "company_repay":
-            print("company_repay")
+        elif command == "company_return":
+            print("company_return")
             try:
-                from _commands.company_repay import handle_company_repay
-                handle_company_repay(msg)
+                from _commands.company_return import handle_company_return
+                handle_company_return(msg)
             except Exception as e:
-                print(f"❌ Error processing company_donate: {e}")
+                print(f"❌ Error processing company_return {e}")
 
+        elif command == "company_info":
+            print("company_invest")
+            try:
+                from _commands.company_info import handle_company_info
+                handle_company_info(msg)
+            except Exception as e:
+                print(f"❌ Error processing company_invest: {e}")
         else:
             print(f"⚠️ Unhandled command: {command}")
 

@@ -12,3 +12,8 @@ CREATE TABLE director_stock_blocks (
 
 -- RLS
 ALTER TABLE director_stock_blocks ENABLE ROW LEVEL SECURITY;
+
+-- FK
+ALTER TABLE director_stock_blocks
+ADD CONSTRAINT director_stock_blocks_stock_id_fkey
+FOREIGN KEY (stock_id) REFERENCES ref_stocks(stock_id);

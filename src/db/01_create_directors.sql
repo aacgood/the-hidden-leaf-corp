@@ -12,3 +12,8 @@ CREATE TABLE directors (
 
 -- RLS
 ALTER TABLE directors ENABLE ROW LEVEL SECURITY;
+
+--FK
+ALTER TABLE directors
+ADD CONSTRAINT directors_company_id_fkey
+FOREIGN KEY (company_id) REFERENCES company(company_id);

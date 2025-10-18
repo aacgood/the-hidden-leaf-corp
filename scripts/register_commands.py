@@ -13,13 +13,15 @@ DISCORD_BOT_TOKEN = json.loads(secrets["SecretString"])["DISCORD_BOT_TOKEN"]
 DISCORD_APPLICATION_ID = json.loads(secrets["SecretString"])["DISCORD_APPLICATION_ID"]
 
 # --- Common Valid Notes ---
-DONATE_NOTE_CHOICES = [
-    {"name": "Initial Funding", "value": "Initial Funding"},
-    {"name": "Top-up Funding", "value": "Top-up Funding"}
+INVEST_NOTE_CHOICES = [
+    {"name": "Initial Investment", "value": "Initial Investment"},
+    {"name": "Top-up Investment", "value": "Top-up Investment"},
+    {"name": "Sign-on Bonus", "value": "Sign-on Bonus"},
+    {"name": "Giveaways", "value": "Giveaways"},
 ]
 
-REPAY_NOTE_CHOICES = [
-    {"name": "Repayment", "value": "Repayment"},
+RETURN_NOTE_CHOICES = [
+    {"name": "Return", "value": "Return"},
 ]
 
 # --- Slash Commands ---
@@ -71,55 +73,72 @@ COMMANDS = [
         "options": [
             {
                 "type": 1,  # Subcommand
-                "name": "donate",
-                "description": "Record a donation to a company (funds sent from donator to director)",
-                "options": [
-                    {
-                    "name": "acronym",
-                    "description": "company acronym",
-                    "type": 3,   # string
-                    "required": True
-                    },
-                    {
-                        "name": "amount",
-                        "description": "Amount donated (whole dollars only)",
-                        "type": 4,  # integer
-                        "required": True,
-                    },
-                    {
-                        "name": "note",
-                        "description": "Purpose of donation (must choose from list)",
-                        "type": 3,  # string
-                        "required": True,
-                        "choices": DONATE_NOTE_CHOICES,
-                    },
-                ],
-            },
-            {
-                "type": 1,  # Subcommand
-                "name": "repay",
-                "description": "Record a repayment from a company (funds returned to donator)",
+                "name": "invest",
+                "description": "Record an investment to a company (funds sent from investor to director)",
                 "options": [
                     {
                         "name": "acronym",
-                        "description": "company acronym",
+                        "description": "Company acronym",
                         "type": 3,   # string
                         "required": True
                     },
                     {
                         "name": "amount",
-                        "description": "Amount repaid (whole dollars only)",
+                        "description": "Amount invested (whole dollars only)",
                         "type": 4,  # integer
                         "required": True,
                     },
                     {
                         "name": "note",
-                        "description": "Purpose of repayment (must choose from list)",
+                        "description": "Purpose of investment (choose from list)",
                         "type": 3,  # string
                         "required": True,
-                        "choices": REPAY_NOTE_CHOICES,
+                        "choices": INVEST_NOTE_CHOICES,
+                    },
+                    {
+                        "name": "delegate",
+                        "description": "Optional: On behalf of",
+                        "type": 6, # User type
+                        "required": False
                     },
                 ],
+            },
+            {
+                "type": 1,  # Subcommand
+                "name": "return",
+                "description": "Record a return from a company (funds returned to investor)",
+                "options": [
+                    {
+                        "name": "acronym",
+                        "description": "Company acronym",
+                        "type": 3,   # string
+                        "required": True
+                    },
+                    {
+                        "name": "amount",
+                        "description": "Amount returned (whole dollars only)",
+                        "type": 4,  # integer
+                        "required": True,
+                    },
+                    {
+                        "name": "note",
+                        "description": "Purpose of return (choose from list)",
+                        "type": 3,  # string
+                        "required": True,
+                        "choices": RETURN_NOTE_CHOICES,
+                    },
+                    {
+                        "name": "delegate",
+                        "description": "Optional: On behalf of",
+                        "type": 6, # User type
+                        "required": False
+                    },
+                ],
+            },
+            {
+                "type": 1,  # Subcommand
+                "name": "info",
+                "description": "Display current company names and acroymns",
             },
         ],
     },
