@@ -106,7 +106,7 @@ def lambda_handler(event, context):
     supabase: Client = create_client(SECRETS["SUPABASE_URL"], SECRETS["SUPABASE_KEY"])
 
     try:
-        directors = supabase.table("directors").select("*").execute().data
+        directors = supabase.table("directors").select("*").eq("prospective", False).execute().data
     except Exception as e:
         send_discord_message(f"[Employees] Error fetching directors: {e}")
         return {"statusCode": 500, "body": "Failed to fetch directors"}

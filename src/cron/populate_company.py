@@ -87,7 +87,7 @@ def lambda_handler(event, context):
     fail_list = []
 
     try:
-        directors = supabase.table("directors").select("*").execute().data
+        directors = supabase.table("directors").select("*").eq("prospective", False).execute().data
     except Exception as e:
         send_discord_message(f"[Company] ❌ Error fetching directors: {e}")
         return {"statusCode": 500, "body": "Failed to fetch directors"}

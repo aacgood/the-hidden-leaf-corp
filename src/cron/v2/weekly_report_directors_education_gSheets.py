@@ -57,6 +57,7 @@ def fetch_directors_and_courses(supabase: Client):
     directors_query = (
         supabase.table("directors")
         .select("torn_user_id, director_name, company_id, company:company(company_id, company_name, company_acronym)")
+        .eq("prospective", False)
         .execute()
     )
     directors_raw = directors_query.data or []

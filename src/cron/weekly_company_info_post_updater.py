@@ -54,7 +54,7 @@ def get_company_benefits(company_type: int, rating: int, supabase: Client):
 def load_directors_map(supabase: Client):
     """Return dict mapping torn_user_id -> director_name"""
     try:
-        rows = supabase.table("directors").select("torn_user_id,director_name").execute().data
+        rows = supabase.table("directors").select("torn_user_id,director_name").eq("prospective", False).execute().data
         return {r["torn_user_id"]: r.get("director_name") for r in rows} if rows else {}
     except Exception as e:
         print(f"[DiscordUpdater] Error fetching directors: {e}")
