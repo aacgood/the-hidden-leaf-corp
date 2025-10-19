@@ -30,6 +30,8 @@ SECRETS = get_secrets()
 
 
 def build_employees_report(rows: list[dict]) -> str:
+    from datetime import datetime, timezone
+
     utc_now = datetime.now(timezone.utc)
     timestamp = utc_now.strftime("%Y-%m-%d %H:%M:%S TCT")
     snapshot_date = utc_now.strftime("%Y-%m-%d")
@@ -39,9 +41,10 @@ def build_employees_report(rows: list[dict]) -> str:
 
     # Determine column widths
     name_width = max(len("Employee Name"), *(len(r["employee_name"]) for r in rows))
-    company_width = max(len("Company Name"), *(len(r["company"]["company_name"]) if r.get("company") else 12 for r in rows))
-    position_width = max(len("Position"), *(len(r["position"]) if r.get("position") else 8 for r in rows))
-    num_width = 14  # for numeric columns
+    company_width = max(len("Company Name"), *(len(r.get("company", {}).get("company_name", f"Company {r['company_id']}")) for r in rows))
+    position_width = max(len("Position"), *(len(r.get("position") or "-") for r in rows))
+    num_width = 14
+    man_int_end_width = max(len("MAN/INT/END"), *(len(f"{r.get('manual_labor',0)}/{r.get('intelligence',0)}/{r.get('endurance',0)}") for r in rows))
 
     # Header
     header = (
@@ -49,7 +52,8 @@ def build_employees_report(rows: list[dict]) -> str:
         f"{'Torn ID':>10}  "
         f"{'Company Name':<{company_width}}  "
         f"{'Position':<{position_width}}  "
-        f"{'Wage':>{num_width}}  "
+        f"{'Wage':>{num_width}}    "
+        f"{'MAN/INT/END':<{man_int_end_width}}    "
         f"{'Working Stats':>{num_width}}  "
         f"{'Effectiveness':>{num_width}}  "
         f"{'Allowable Addiction':>{num_width}}"
@@ -67,41 +71,36 @@ def build_employees_report(rows: list[dict]) -> str:
         "-" * len(header)
     ]
 
-    total_wage = 0
-    total_working = 0
-    total_effectiveness = 0
-    total_addiction = 0
-
-    # Sort by company name then employee_name
+    # Sort by working_stats descending
     rows_sorted = sorted(rows, key=lambda r: r.get("working_stats", 0), reverse=True)
-
 
     for r in rows_sorted:
         employee = r["employee_name"]
         torn_id = r["torn_user_id"]
         company_name = r.get("company", {}).get("company_name", f"Company {r['company_id']}")
-        position = r.get("position", "-")
+        position = r.get("position") or "-"
         wage = r.get("wage") or 0
         working_stats = r.get("working_stats") or 0
         effectiveness = r.get("effectiveness_total") or 0
         allowable_addiction = r.get("allowable_addiction") or 0
+        manual_labor = r.get("manual_labor") or 0
+        intelligence = r.get("intelligence") or 0
+        endurance = r.get("endurance") or 0
 
-        total_wage += wage
-        total_working += working_stats
-        total_effectiveness += effectiveness
-        total_addiction += allowable_addiction
+        man_int_end_str = f"{manual_labor}/{intelligence}/{endurance}"
 
+        # Row formatting
         lines.append(
             f"{employee:<{name_width}}  "
             f"{torn_id:>10}  "
             f"{company_name:<{company_width}}  "
             f"{position:<{position_width}}  "
-            f"${wage:>{num_width-1},}  "
+            f"{f'${wage:,}':>{num_width}}    "
+            f"{man_int_end_str:<{man_int_end_width}}  "
             f"{working_stats:>{num_width}}  "
             f"{effectiveness:>{num_width}}  "
             f"{allowable_addiction:>{num_width}}"
         )
-
 
     return "\n".join(lines)
 
@@ -156,10 +155,13 @@ def lambda_handler(event=None, context=None):
         employees_query = (
             supabase.table("employees")
             .select(
-                "employee_name, torn_user_id, company_id, position, wage, working_stats, effectiveness_total, allowable_addiction, company:company_id(company_name)"
+                "employee_name, torn_user_id, company_id, position, wage, working_stats, "
+                "effectiveness_total, allowable_addiction, manual_labor, intelligence, endurance, "
+                "company:company_id(company_name)"
             )
             .execute()
         )
+
         
         employees = employees_query.data or []
 
