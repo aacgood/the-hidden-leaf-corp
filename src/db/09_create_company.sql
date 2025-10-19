@@ -20,3 +20,9 @@ CREATE INDEX idx_company_acronym ON company (company_acronym);
 
 -- RLS
 ALTER TABLE company ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.company
+ADD COLUMN rating integer DEFAULT 0,
+ADD COLUMN discord_message_id BIGINT,
+ADD COLUMN discord_channel_id BIGINT,
+ADD COLUMN custom_msg_1 TEXT;

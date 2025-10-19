@@ -57,6 +57,7 @@ def process_company(supabase: Client, director: dict, company: dict, company_det
 
     record = {
         "company_id": company_id,
+        "rating": company.get("rating"),
         "torn_user_id": director["torn_user_id"],
         "company_name": company.get("name"),
         "company_type": company.get("company_type"),
@@ -110,7 +111,7 @@ def lambda_handler(event, context):
             )
             resp.raise_for_status()
             data = resp.json()
-            print(data)
+            #print(data)
 
             company = data.get("company", {})
             company_details = data.get("company_detailed", {})

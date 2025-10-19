@@ -315,6 +315,22 @@ Resources:
             Description: Directors Stock holdings for company related bonuses Every Sunday at 20:00 UTC
             Enabled: true
 
+  WeeklyCompanyInfoPostUpdaterCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/
+      Handler: weekly_company_info_post_updater.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * SUN *)
+            Name: WeeklyCompanyInfoPostJob
+            Description: Update the info post Every Sunday at 20:00 UTC
+            Enabled: true
+
 Outputs:
 
   CronSecretsRoleArn:

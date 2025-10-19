@@ -91,6 +91,12 @@ sam local invoke WeeklyReportDirectorsStockBlocksLongCron --event src/cron/sampl
 ```
 
 
+### Weekly Company Info Post Updater 
+
+```sh
+sam local invoke WeeklyCompanyInfoPostUpdaterCron --event src/cron/sample_event.json
+```
+
 ## SAM Deployment
 
 These are setup as a cron at 17:00 UTC.
