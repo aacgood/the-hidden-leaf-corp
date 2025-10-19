@@ -4,8 +4,6 @@ CREATE TABLE directors (
     director_name TEXT NOT NULL,
     company_id BIGINT,
     api_key TEXT,
-    equity NUMERIC,
-    voting_pct NUMERIC,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE
 );
@@ -17,3 +15,7 @@ ALTER TABLE directors ENABLE ROW LEVEL SECURITY;
 ALTER TABLE directors
 ADD CONSTRAINT directors_company_id_fkey
 FOREIGN KEY (company_id) REFERENCES company(company_id);
+
+
+ALTER TABLE directors
+ADD COLUMN prospective BOOLEAN DEFAULT FALSE;

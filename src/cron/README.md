@@ -90,6 +90,11 @@ sam local invoke DailyReportAllEmployeesLongCron --event src/cron/sample_event.j
 sam local invoke WeeklyReportDirectorsStockBlocksLongCron --event src/cron/sample_event.json
 ```
 
+### Weekly Report Directors Education (Long Form)
+
+```sh
+sam local invoke WeeklyReportDirectorsEducationLongCron --event src/cron/sample_event.json
+```
 
 ### Weekly Company Info Post Updater 
 

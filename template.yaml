@@ -315,6 +315,22 @@ Resources:
             Description: Directors Stock holdings for company related bonuses Every Sunday at 20:00 UTC
             Enabled: true
 
+  WeeklyReportDirectorsEducationGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: weekly_report_directors_education_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * SUN *)
+            Name: WeeklyReportDirectorsEducationGSJob
+            Description: Directors Completed Education Every Sunday at 20:00 UTC
+            Enabled: true
+
   WeeklyCompanyInfoPostUpdaterCron:
     Type: AWS::Serverless::Function
     Properties:
