@@ -347,9 +347,41 @@ Resources:
           Properties:
             Schedule: cron(00 20 ? * SUN *)
             Name: WeeklyReportDirectorsStocksGSJob
-            Description: Directors Stock holdings for company related bonuses Every Sunday at 20:00 UTC
+            Description: Directors Education courses completed Every Sunday at 20:00 UTC
             Enabled: true
 
+# Prospectives
+  WeeklyReportProspectiveDirectorsEducationGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/prospective/
+      Handler: weekly_report_prospective_directors_education_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * MON *)
+            Name: WeeklyReportProspectiveDirectorsEducationGSJob
+            Description: Prospective Directors Completed Education Every Monday at 20:00 UTC
+            Enabled: true
+
+  WeeklyReportProspectiveDirectorsStocksGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/prospective/
+      Handler: weekly_report_prospective_directors_stocks_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * MON *)
+            Name: WeeklyReportProspectiveDirectorsStocksGSJob
+            Description: Directors Stock holdings for company related bonuses Every Monday at 20:00 UTC
+            Enabled: true
 
 Outputs:
 

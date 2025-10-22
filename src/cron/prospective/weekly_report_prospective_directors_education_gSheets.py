@@ -9,8 +9,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 # --- Config ---
 REGION = "ap-southeast-1"
-GSHEET_NAME = "The Hidden Leaf Corp - Reports"
-GSHEET_ID = "1MgX93FK1PduIKgtz8RqIcG9U4kZhxRFJoN0kLtrJrVU"
+GSHEET_NAME = "The Hidden Leaf Corp - Prospective Directors"
+GSHEET_ID = "1yRjH7WdwALSioFgVtJxS-n-rOrLzfn7pDTFn44qpeAA"
 EDUCATION_TAB = "Director Education"
 GOOGLE_CREDS_FILE = "/tmp/gCreds.json"
 
@@ -53,11 +53,11 @@ def gsheets_client():
 
 # --- Fetch directors and courses from Supabase ---
 def fetch_directors_and_courses(supabase: Client):
-    # Directors
+    # Prospective Directors
     directors_query = (
         supabase.table("directors")
         .select("torn_user_id, director_name, company_id, company:company(company_id, company_name, company_acronym)")
-        .eq("prospective", False)
+        .eq("prospective", True)
         .execute()
     )
     directors_raw = directors_query.data or []
@@ -100,7 +100,7 @@ def write_education_to_sheet(directors, courses):
     sheet.clear()
 
     # Build header row
-    header = ["Course Code", "Course Name", "Course Effect"] + [d["director_name"] for d in directors]
+    header = ["Course Code", "Course Name", "Cource Effect"] + [d["director_name"] for d in directors]
 
     # Map completed course IDs for each director
     director_completed_map = {
@@ -146,7 +146,7 @@ def send_discord_sheet_link(webhook_url: str, sheet_name: str, gid: int):
         return
     
     utc_now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M TCT")
-    content = f"🎓 Director Education Report is available.\n\nGenerated: {utc_now}"
+    content = f"🎓 Prospective Directors Education Report is available.\n\nGenerated: {utc_now}"
 
     # Build the Google Sheet URL
     sheet_url = f"https://docs.google.com/spreadsheets/d/{GSHEET_ID}/edit#gid={gid}"
@@ -202,7 +202,7 @@ def lambda_handler(event=None, context=None):
         return
     
     send_discord_sheet_link(discord_webhook_url, GSHEET_NAME, gid)
-    print(f"✅ Directors education written to Google Sheet '{GSHEET_NAME}' tab '{EDUCATION_TAB}'.")
+    print(f"✅ Prospective Directors education written to Google Sheet '{GSHEET_NAME}' tab '{EDUCATION_TAB}'.")
 
 if __name__ == "__main__":
     lambda_handler()
