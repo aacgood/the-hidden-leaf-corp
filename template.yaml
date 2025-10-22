@@ -23,6 +23,8 @@ Resources:
             Principal:
               Service: lambda.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
       Policies:
         - PolicyName: CronSecretsPolicy
           PolicyDocument:
@@ -35,6 +37,7 @@ Resources:
                   - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:discord_keys-*
                   - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:supabase_keys-*
                   - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
+                  - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:google_service_account-*
 
 
   # --- Frontend Lambda for Discord interactions ---
@@ -189,7 +192,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
+      CodeUri: src/cron/discord_reports/
       Handler: daily_report_stock.lambda_handler
       Timeout: 30
       Events:
@@ -222,7 +225,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
+      CodeUri: src/cron/discord_reports/
       Handler: daily_report_employees.lambda_handler
       Timeout: 30
       Events:
@@ -232,103 +235,6 @@ Resources:
             Schedule: cron(0 19 * * ? *)
             Name: DailyReportEmployeesJob
             Description: Employee report at 17:15 UTC
-            Enabled: true
-
-  DailyReportCompanyLongCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
-      Handler: daily_report_company_long.lambda_handler
-      Timeout: 30
-      Events:
-        DailySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(45 18 * * ? *)
-            Name: DailyReportCompanyLongJob
-            Description: Company Financials report at 18:45 UTC
-            Enabled: true
-
-  WeeklyReportCompanyLongCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
-      Handler: weekly_report_company_long.lambda_handler
-      Timeout: 30
-      Events:
-        WeeklySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(45 18 ? * SUN *)
-            Name: WeeklyReportCompanyLongJob
-            Description: Aggregated Company financials report Every Sunday at 18:45 UTC
-            Enabled: true
-
-  WeeklyReportCompanyInvestmentsLongCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
-      Handler: weekly_report_company_investments_long.lambda_handler
-      Timeout: 30
-      Events:
-        WeeklySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(00 20 ? * SUN *)
-            Name: WeeklyReportCompanyInvestmentsLongJob
-            Description: Aggregated Company Investments report Every Sunday at 20:00 UTC
-            Enabled: true
-
-  DailyReportAllEmployeesLongCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
-      Handler: daily_report_all_employees_long.lambda_handler
-      Timeout: 30
-      Events:
-        DailySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(00 19 * * ? *)
-            Name: DailyReportAllEmployeesLongJob
-            Description: All Employees report Every day at 19:00 UTC
-            Enabled: true
-
-
-  WeeklyReportDirectorsStockBlocksLongCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/
-      Handler: weekly_report_directors_stock_blocks_long.lambda_handler
-      Timeout: 30
-      Events:
-        WeeklySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(00 20 ? * SUN *)
-            Name: WeeklyReportDirectorStockBlocksLongJob
-            Description: Directors Stock holdings for company related bonuses Every Sunday at 20:00 UTC
-            Enabled: true
-
-  WeeklyReportDirectorsEducationGSCron:
-    Type: AWS::Serverless::Function
-    Properties:
-      Role: !GetAtt CronSecretsRole.Arn
-      CodeUri: src/cron/v2/
-      Handler: weekly_report_directors_education_gSheets.lambda_handler
-      Timeout: 30
-      Events:
-        WeeklySchedule:
-          Type: Schedule
-          Properties:
-            Schedule: cron(00 20 ? * SUN *)
-            Name: WeeklyReportDirectorsEducationGSJob
-            Description: Directors Completed Education Every Sunday at 20:00 UTC
             Enabled: true
 
   WeeklyCompanyInfoPostUpdaterCron:
@@ -346,6 +252,104 @@ Resources:
             Name: WeeklyCompanyInfoPostJob
             Description: Update the info post Every Sunday at 20:00 UTC
             Enabled: true
+
+# V2 using Google Sheets
+  WeeklyReportDirectorsEducationGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: weekly_report_directors_education_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * SUN *)
+            Name: WeeklyReportDirectorsEducationGSJob
+            Description: Directors Completed Education Every Sunday at 20:00 UTC
+            Enabled: true
+
+  DailyReportAllEmployeesGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: daily_report_all_employees_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 19 * * ? *)
+            Name: DailyReportAllEmployeesGSJob
+            Description: All Employees stats Every Day at 19:00 UTC
+            Enabled: true
+
+  DailyReportComapanyFinancialsGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: daily_report_company_financials_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(45 18 * * ? *)
+            Name: DailyReportComapanyFinancialsGSJob
+            Description: Company Financials stats Every Day at 18:45 UTC
+            Enabled: true
+
+  DailyReportInvestmentsGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: daily_report_investments_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 * * ? *)
+            Name: DailyReportInvestmentsGSJob
+            Description: Company Investments/Returns stats Every Day at 20:00 UTC
+            Enabled: true
+
+  WeeklyReportCompanyFinancialsGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: weekly_report_company_financials_gSheets.lambda_handler
+      Timeout: 30
+      Events:
+        DailySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(45 18 ? * SUN *)
+            Name: WeeklyReportComapanyFinancialsGSJob
+            Description: Company Financials stats Every Sinday at 18:45 UTC
+            Enabled: true
+
+  WeeklyReportDirectorsStocksGSCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/cron/v2/
+      Handler: weekly_report_directors_stocks_gsheets.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(00 20 ? * SUN *)
+            Name: WeeklyReportDirectorsStocksGSJob
+            Description: Directors Stock holdings for company related bonuses Every Sunday at 20:00 UTC
+            Enabled: true
+
 
 Outputs:
 
@@ -388,14 +392,6 @@ Outputs:
   PopulateCompanyCronArn:
     Description: Lambda function ARN for populate company cron job
     Value: !GetAtt PopulateCompanyCron.Arn
-
-  DailyReportEmployeesCronArn:
-    Description: Lambda function ARN for daily report cron job
-    Value: !GetAtt DailyReportEmployeesCron.Arn
-
-  DailyReportStockCronArn:
-    Description: Lambda function ARN for daily stock cron job
-    Value: !GetAtt DailyReportStockCron.Arn
 
   PopulateCompanyStockCronArn:
     Description: Lambda function ARN for populating daily company stock cron job

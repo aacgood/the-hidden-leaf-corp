@@ -142,6 +142,26 @@ COMMANDS = [
             },
         ],
     },
+    {
+        "name": "chunin",
+        "description": "Chunin related commands",
+        "dm_permission": False,
+        "options": [
+            {
+                "type": 1,  # Subcommand
+                "name": "register",
+                "description": "Register your interest to become a Jonin",
+                "options": [
+                    {
+                        "name": "api_key",
+                        "description": "Chunin API Key",
+                        "type": 3,  # string
+                        "required": True,
+                    },
+                ],
+            },
+        ],
+    },
 ]
 
 # --- Guild only ---

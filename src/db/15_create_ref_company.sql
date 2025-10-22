@@ -15,6 +15,17 @@ CREATE TABLE ref_company (
 ALTER TABLE ref_company ENABLE ROW LEVEL SECURITY;
 
 -- =========================
+-- Game Shop (type 7)
+-- =========================
+INSERT INTO ref_company (company_type, company_class, rating, benefit_description) VALUES
+(7, 'Game Shop', 1, 'Ub3rg33k: 50% coding time reduction'),
+(7, 'Game Shop', 3, 'Early Release: 100 Job points for money'),
+(7, 'Game Shop', 5, 'Gamer: 100% happy gain from Game Console'),
+(7, 'Game Shop', 7, 'Power Levelling: 10 job points to view progress to your next level'),
+(7, 'Game Shop', 10, 'Overpowered: 1 job point for 1 nerve, 5 energy, 50 happiness');
+
+
+-- =========================
 -- Adult Novelty Store (type 10)
 -- =========================
 INSERT INTO ref_company (company_type, company_class, rating, benefit_description) VALUES

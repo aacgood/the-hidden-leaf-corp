@@ -15,6 +15,7 @@ def lambda_handler(event, context):
         payload = msg.get("payload")
 
         print(f"Router received command: {command}")
+        print(record)
 
         if not command:
             print("⚠️ Missing command_name in message, skipping")
@@ -57,6 +58,16 @@ def lambda_handler(event, context):
                 handle_company_info(msg)
             except Exception as e:
                 print(f"❌ Error processing company_invest: {e}")
+
+        elif command == "chunin_register":
+            print(f"Command: {command}")
+            print(f"msg: {msg}")
+            try:
+                from _commands.chunin_register import handle_chunin_register
+                handle_chunin_register(payload)
+            except Exception as e:
+                print(f"❌ Error processing chunin_register: {e}")
+
         else:
             print(f"⚠️ Unhandled command: {command}")
 

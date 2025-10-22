@@ -90,6 +90,7 @@ def lambda_handler(event, context):
     supabase: Client = create_client(SECRETS["SUPABASE_URL"], SECRETS["SUPABASE_KEY"])
 
     try:
+        # This will also get prospective directors
         directors = supabase.table("directors").select("*").execute().data
     except Exception as e:
         send_discord_message(f"[Director Stock Blocks] Error fetching directors: {e}")

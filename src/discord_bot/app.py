@@ -12,8 +12,11 @@ SLASH_COMMAND_QUEUE_URL = os.environ.get("SLASH_COMMAND_QUEUE_URL")
 
 # Roles
 ROLE_AN_STORE_ADMIN = 1424612035555098716
+ROLE_AN_STORE_MEMBERS = 1424611929527418960
 ROLE_MUSIC_STORE_ADMIN = 1419803622631543046
+ROLE_MUSIC_STORE_MEMBERS = 1419803463663091866
 ROLE_ZERODB_STORE_ADMIN = 1427104006617960489
+ROLE_ZERODB_STORE_MEMBERS = 1427104087480074332
 ROLE_SERVER_ADMIN = 1419804995532099624
 ROLE_JONIN = 1419589117938761839
 ROLE_ANBU = 1423550306243055627
@@ -27,6 +30,7 @@ CHANNEL_MUSIC_STORE_ADMIN = 1419803970649722992
 CHANNEL_ZERODB_STORE_ADMIN = 1427104434613256312
 CHANNEL_ZERODB_STORE_REPORTS = 1427104495787049156
 CHANNEL_THLC_BOT_COMMANDS = 1428303850322001921
+CHANNEL_ASSIGNMENT_HALL = 1419804098273869835
 
 sqs_client = boto3.client("sqs")
 
@@ -117,6 +121,28 @@ def lambda_handler(event, context):
                     })
                 }
 
+        elif command_name == "chunin":
+            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_MEMBERS, ROLE_MUSIC_STORE_MEMBERS, ROLE_ZERODB_STORE_MEMBERS}
+            ALLOWED_CHANNELS = {CHANNEL_ASSIGNMENT_HALL}
+            if not user_roles.intersection(ALLOWED_ROLES):
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 You don’t have permission to use `/chunin`.", "flags": 64}
+                    })
+                }
+            if channel_id not in ALLOWED_CHANNELS:
+                return {
+                    "statusCode": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "body": json.dumps({
+                        "type": 4,
+                        "data": {"content": "🚫 `/chunin` cannot be used in this channel.", "flags": 64}
+                    })
+                }
+            
         elif command_name == "link":
             ALLOWED_ROLES = {ROLE_SERVER_ADMIN}
             ALLOWED_CHANNELS = {CHANNEL_AN_STORE_REPORTS, CHANNEL_MUSIC_STORE_REPORTS, CHANNEL_ZERODB_STORE_REPORTS}
@@ -162,7 +188,9 @@ def lambda_handler(event, context):
                 }
 
         # --- Normalize company subcommands ---
-        if command_name == "company":
+        commands_to_normalise = {"company", "chunin"}
+        if command_name in commands_to_normalise:
+            
             options = data.get("options", [])
             normalized_parts = [command_name]
             normalized_options = None
@@ -181,7 +209,17 @@ def lambda_handler(event, context):
             payload["data"]["options"] = normalized_options or []
 
         # --- Immediately defer response ---
-        defer_response = {"type": 5}
+        EPHEMERAL_COMMANDS = {"register", "chunin_register", "link"}
+
+        if command_name in EPHEMERAL_COMMANDS:
+            # make the initial ACK ephemeral so first follow-up is private
+            defer_response = {"type": 5, "data": {"flags": 64}}
+            print(f"Deferring {command_name} as ephemeral (private).")
+        else:
+            defer_response = {"type": 5}
+            print(f"Deferring {command_name} as normal (public).")
+
+
         response = {
             "statusCode": 200,
             "headers": {"Content-Type": "application/json"},

@@ -117,6 +117,11 @@ def write_education_to_sheet(directors, courses):
             row.append(status)
         all_rows.append(row)
 
+    # Add timestamp row
+    utc_now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S TCT")
+    last_updated_row = [f"Last Updated: {utc_now}"] + [""] * (len(header) - 1)
+    all_rows.append(last_updated_row)
+
     # Determine the range to update
     num_rows = len(all_rows)
     num_cols = len(all_rows[0])
@@ -130,18 +135,21 @@ def write_education_to_sheet(directors, courses):
     sheet.freeze(rows=1)
     sheet.freeze(cols=2)
 
+    # Return gid for the Discord link
+    return sheet._properties['sheetId']
 
-def send_discord_sheet_link(webhook_url: str, sheet_name: str):
+
+def send_discord_sheet_link(webhook_url: str, sheet_name: str, gid: int):
     
     if not webhook_url:
         print("⚠️ Discord webhook URL missing.")
         return
     
     utc_now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M TCT")
-    content = f"🎓 The Hidden Leaf Corp - Director Education Report is now available online. (Generated: {utc_now})"
+    content = f"🎓 Director Education Report is available.\n\nGenerated: {utc_now}"
 
     # Build the Google Sheet URL
-    sheet_url = f"https://docs.google.com/spreadsheets/d/{GSHEET_ID}/edit"
+    sheet_url = f"https://docs.google.com/spreadsheets/d/{GSHEET_ID}/edit#gid={gid}"
 
     # Embed payload
     embed = {
@@ -174,7 +182,7 @@ def lambda_handler(event=None, context=None):
     if not directors or not courses:
         print("⚠️ No directors or courses found.")
         return
-    write_education_to_sheet(directors, courses)
+    gid = write_education_to_sheet(directors, courses)
     
     # Fetch discord channel for group ops
     try:
@@ -193,7 +201,7 @@ def lambda_handler(event=None, context=None):
         print("⚠️ No group ops discord webhook found.")
         return
     
-    send_discord_sheet_link(discord_webhook_url, GSHEET_NAME)
+    send_discord_sheet_link(discord_webhook_url, GSHEET_NAME, gid)
     print(f"✅ Directors education written to Google Sheet '{GSHEET_NAME}' tab '{EDUCATION_TAB}'.")
 
 if __name__ == "__main__":
