@@ -26,6 +26,16 @@ INSERT INTO ref_company (company_type, company_class, rating, benefit_descriptio
 
 
 -- =========================
+-- Candle Shop (type 8)
+-- =========================
+INSERT INTO ref_company (company_type, company_class, rating, benefit_description) VALUES
+(8, 'Candle Shop', 1, 'Warming Therapy: 1 job point for 50 happiness'),
+(8, 'Candle Shop', 3, 'Illumination: 50% awareness'),
+(8, 'Candle Shop', 5, 'Calming Therapy: 1 job point for 2 nerve'),
+(8, 'Candle Shop', 7, 'Reinvigorating Therapy: 1 job point for 5 energy'),
+(8, 'Candle Shop', 10, 'Meditation: 250 job points to view someones true level');
+
+-- =========================
 -- Adult Novelty Store (type 10)
 -- =========================
 INSERT INTO ref_company (company_type, company_class, rating, benefit_description) VALUES

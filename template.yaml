@@ -383,6 +383,23 @@ Resources:
             Description: Directors Stock holdings for company related bonuses Every Monday at 20:00 UTC
             Enabled: true
 
+# Discord Role Updater
+  DiscordRoleSyncCron:
+    Type: AWS::Serverless::Function
+    Properties:
+      Role: !GetAtt CronSecretsRole.Arn
+      CodeUri: src/discord_bot
+      Handler: role_sync.lambda_handler
+      Timeout: 30
+      Events:
+        WeeklySchedule:
+          Type: Schedule
+          Properties:
+            Schedule: cron(0 0/3 * * ? *)
+            Name: DiscordRoleSyncJob
+            Description: Run the discord update role Every 3 hours
+            Enabled: true
+
 Outputs:
 
   CronSecretsRoleArn:

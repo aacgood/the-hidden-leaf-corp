@@ -3,6 +3,7 @@ import os
 import boto3
 from nacl.signing import VerifyKey
 from nacl.exceptions import BadSignatureError
+import roles as roles
 from _commands.ping import handle_ping
 #from _commands.company_channels import handle_link_company
 
@@ -10,27 +11,7 @@ DISCORD_API_BASE = "https://discord.com/api/v10/interactions"
 
 SLASH_COMMAND_QUEUE_URL = os.environ.get("SLASH_COMMAND_QUEUE_URL")
 
-# Roles
-ROLE_AN_STORE_ADMIN = 1424612035555098716
-ROLE_AN_STORE_MEMBERS = 1424611929527418960
-ROLE_MUSIC_STORE_ADMIN = 1419803622631543046
-ROLE_MUSIC_STORE_MEMBERS = 1419803463663091866
-ROLE_ZERODB_STORE_ADMIN = 1427104006617960489
-ROLE_ZERODB_STORE_MEMBERS = 1427104087480074332
-ROLE_SERVER_ADMIN = 1419804995532099624
-ROLE_JONIN = 1419589117938761839
-ROLE_ANBU = 1423550306243055627
-ROLE_HOKAGE = 1423558170621640764
 
-# Channels
-CHANNEL_AN_STORE_REPORTS = 1424626226349346918
-CHANNEL_AN_STORE_ADMIN = 1424625414722293790
-CHANNEL_MUSIC_STORE_REPORTS = 1419804361248215131
-CHANNEL_MUSIC_STORE_ADMIN = 1419803970649722992
-CHANNEL_ZERODB_STORE_ADMIN = 1427104434613256312
-CHANNEL_ZERODB_STORE_REPORTS = 1427104495787049156
-CHANNEL_THLC_BOT_COMMANDS = 1428303850322001921
-CHANNEL_ASSIGNMENT_HALL = 1419804098273869835
 
 sqs_client = boto3.client("sqs")
 
@@ -100,8 +81,9 @@ def lambda_handler(event, context):
         channel_id = int(payload["channel"]["id"])
 
         if command_name == "register":
-            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_ADMIN, ROLE_MUSIC_STORE_ADMIN, ROLE_ZERODB_STORE_ADMIN}
-            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_ADMIN, CHANNEL_MUSIC_STORE_ADMIN, CHANNEL_ZERODB_STORE_ADMIN}
+            ALLOWED_ROLES = {roles.ALL_ADMIN_ROLES}
+            ALLOWED_CHANNELS = {roles.ALL_ADMIN_CHANNELS}
+
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
                     "statusCode": 200,
@@ -122,8 +104,9 @@ def lambda_handler(event, context):
                 }
 
         elif command_name == "chunin":
-            ALLOWED_ROLES = {ROLE_SERVER_ADMIN, ROLE_AN_STORE_MEMBERS, ROLE_MUSIC_STORE_MEMBERS, ROLE_ZERODB_STORE_MEMBERS}
-            ALLOWED_CHANNELS = {CHANNEL_ASSIGNMENT_HALL}
+            ALLOWED_ROLES = {roles.ROLE_SERVER_ADMIN, roles.ROLE_CHUNIN}
+            ALLOWED_CHANNELS = {roles.CHANNEL_ASSIGNMENT_HALL}
+
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
                     "statusCode": 200,
@@ -144,8 +127,9 @@ def lambda_handler(event, context):
                 }
             
         elif command_name == "link":
-            ALLOWED_ROLES = {ROLE_SERVER_ADMIN}
-            ALLOWED_CHANNELS = {CHANNEL_AN_STORE_REPORTS, CHANNEL_MUSIC_STORE_REPORTS, CHANNEL_ZERODB_STORE_REPORTS}
+            ALLOWED_ROLES = {roles.ROLE_SERVER_ADMIN}
+            ALLOWED_CHANNELS = {roles.ALL_ADMIN_CHANNELS}
+
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
                     "statusCode": 200,
@@ -166,8 +150,9 @@ def lambda_handler(event, context):
                 }
 
         elif command_name == "company":
-            ALLOWED_ROLES = {ROLE_HOKAGE, ROLE_ANBU}
-            ALLOWED_CHANNELS = {CHANNEL_THLC_BOT_COMMANDS}
+            ALLOWED_ROLES = {roles.ROLE_HOKAGE, roles.ROLE_ANBU}
+            ALLOWED_CHANNELS = {roles.CHANNEL_THLC_BOT_COMMANDS}
+
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
                     "statusCode": 200,

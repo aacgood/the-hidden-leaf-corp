@@ -55,11 +55,13 @@ def handle_link_company(msg: dict):
         )
 
     # Extract webhook URL
-    discord_webhook_url = msg.get("discord_webhook_url")
+    print(f"msg: {msg}")
+    discord_webhook_url = msg.get("webhook_url")
+    print(f"discord_webhook_url: {discord_webhook_url}")
     if not discord_webhook_url and payload:
         options = payload.get("data", {}).get("options", [])
         discord_webhook_url = next(
-            (opt["value"] for opt in options if opt.get("name") in ("discord_webhook_url",)), 
+            (opt["value"] for opt in options if opt.get("name") in ("webhook_url",)), 
             None
         )
 
@@ -70,6 +72,8 @@ def handle_link_company(msg: dict):
     channel_name = msg.get("channel_name") \
                    or (payload.get("channel", {}).get("name") if payload else None) \
                    or f"channel_{channel_id}"
+    
+    print(f"company_id: {company_id}, channel_id: {channel_id}, channel_name:{channel_name}")
 
     # Validation
     if not company_id or not channel_id or not discord_webhook_url:
