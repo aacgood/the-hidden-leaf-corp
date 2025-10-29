@@ -12,7 +12,7 @@ Globals:
 
 Resources:
 
-  # --- Shared IAM Role for all cron Lambdas ---
+# --- Shared IAM Role for all cron Lambdas ---
   CronSecretsRole:
     Type: AWS::IAM::Role
     Properties:
@@ -39,8 +39,17 @@ Resources:
                   - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:torn_director_api_keys-*
                   - !Sub arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:google_service_account-*
 
+# --- Shared Layer for DRY Python code ---
+  SharedLayer:
+    Type: AWS::Serverless::LayerVersion
+    Properties:
+      LayerName: shared-utils
+      Description: Common utility functions for all Lambdas
+      ContentUri: layers/shared/
+      CompatibleRuntimes:
+        - python3.12
 
-  # --- Frontend Lambda for Discord interactions ---
+# --- Frontend Lambda for Discord interactions ---
   DiscordBotFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -67,13 +76,13 @@ Resources:
             Path: /interactions
             Method: post
 
-  # --- Generic SQS Queue for background processing ---
+# --- Generic SQS Queue for background processing ---
   SlashCommandQueue:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: slash-command-queue
 
-  # --- Worker Lambda triggered by SQS (routes commands) ---
+# --- Worker Lambda triggered by SQS (routes commands) ---
   SlashCommandWorkerFunction:
     Type: AWS::Serverless::Function
     Properties:
@@ -105,7 +114,6 @@ Resources:
             BatchSize: 1
 
 # --- CRON jobs for populating the DB ---
-
   # --- Non-critical Cron Jobs (can run earlier) ---
   PopulateDirectorEducationCron:
     Type: AWS::Serverless::Function
@@ -211,6 +219,9 @@ Resources:
       Role: !GetAtt CronSecretsRole.Arn
       CodeUri: src/cron/
       Handler: populate_employees.lambda_handler
+      Runtime: python3.12
+      Layers:
+        - !Ref SharedLayer
       Timeout: 30
       Events:
         DailySchedule:
@@ -253,7 +264,7 @@ Resources:
             Description: Update the info post Every Sunday at 20:00 UTC
             Enabled: true
 
-# V2 using Google Sheets
+# --- V2 using Google Sheets ---
   WeeklyReportDirectorsEducationGSCron:
     Type: AWS::Serverless::Function
     Properties:
@@ -350,7 +361,7 @@ Resources:
             Description: Directors Education courses completed Every Sunday at 20:00 UTC
             Enabled: true
 
-# Prospectives
+# --- Prospectives ---
   WeeklyReportProspectiveDirectorsEducationGSCron:
     Type: AWS::Serverless::Function
     Properties:
@@ -383,7 +394,7 @@ Resources:
             Description: Directors Stock holdings for company related bonuses Every Monday at 20:00 UTC
             Enabled: true
 
-# Discord Role Updater
+# --- Discord Role Updater ---
   DiscordRoleSyncCron:
     Type: AWS::Serverless::Function
     Properties:
@@ -397,7 +408,7 @@ Resources:
           Properties:
             Schedule: cron(0 0/3 * * ? *)
             Name: DiscordRoleSyncJob
-            Description: Run the discord update role Every 3 hours
+            Description: Run the discord update role Every 3 hours (gets the employee data and adds chunin to them)
             Enabled: true
 
 Outputs:

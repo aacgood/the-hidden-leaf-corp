@@ -14,7 +14,7 @@ def get_secrets():
     """
     Load both Discord and Supabase secrets from AWS Secrets Manager
     """
-    client = boto3.client("secretsmanager", region_name="ap-southeast-1")
+    client = boto3.client("secretsmanager", region_name=REGION)
 
     discord_secret = json.loads(
         client.get_secret_value(SecretId="discord_keys")["SecretString"]

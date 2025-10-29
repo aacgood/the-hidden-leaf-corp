@@ -17,6 +17,7 @@ INVEST_NOTE_CHOICES = [
     {"name": "Initial Investment", "value": "Initial Investment"},
     {"name": "Top-up Investment", "value": "Top-up Investment"},
     {"name": "Sign-on Bonus", "value": "Sign-on Bonus"},
+    {"name": "Staff Salary", "value": "Staff Salary"},
     {"name": "Giveaways", "value": "Giveaways"},
 ]
 

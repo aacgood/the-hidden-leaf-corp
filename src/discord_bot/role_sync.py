@@ -3,6 +3,7 @@ import re
 import time
 import boto3
 import requests
+import roles as roles
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
@@ -10,7 +11,7 @@ from supabase import create_client, Client
 REGION = "ap-southeast-1"
 DISCORD_BASE = "https://discord.com/api/v10"
 GUILD_ID = "1419520053971517633"
-CHUNIN_ROLE_ID = "1420160564306513930"
+CHUNIN_ROLE_ID = roles.ROLE_CHUNIN
 DRY_RUN = False  # ⬅️ Toggle this to False to go live
 
 # ---------- Secrets ----------

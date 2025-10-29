@@ -1,8 +1,8 @@
 import json
 import os
 import boto3
-from nacl.signing import VerifyKey
-from nacl.exceptions import BadSignatureError
+from nacl.signing import VerifyKey              # type: ignore
+from nacl.exceptions import BadSignatureError   # type: ignore
 import roles as roles
 from _commands.ping import handle_ping
 #from _commands.company_channels import handle_link_company
@@ -82,7 +82,11 @@ def lambda_handler(event, context):
 
         if command_name == "register":
             ALLOWED_ROLES = {roles.ALL_ADMIN_ROLES}
-            ALLOWED_CHANNELS = {roles.ALL_ADMIN_CHANNELS}
+            ALLOWED_CHANNELS = roles.ALL_ADMIN_CHANNELS
+
+            # normalize
+            if isinstance(user_roles, int):
+                user_roles = {user_roles}
 
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
@@ -128,7 +132,11 @@ def lambda_handler(event, context):
             
         elif command_name == "link":
             ALLOWED_ROLES = {roles.ROLE_SERVER_ADMIN}
-            ALLOWED_CHANNELS = {roles.ALL_ADMIN_CHANNELS}
+            ALLOWED_CHANNELS = roles.ALL_ADMIN_CHANNELS
+
+            # normalize
+            if isinstance(user_roles, int):
+                user_roles = {user_roles}
 
             if not user_roles.intersection(ALLOWED_ROLES):
                 return {
@@ -148,6 +156,7 @@ def lambda_handler(event, context):
                         "data": {"content": "🚫 `/link` cannot be used in this channel.", "flags": 64}
                     })
                 }
+
 
         elif command_name == "company":
             ALLOWED_ROLES = {roles.ROLE_HOKAGE, roles.ROLE_ANBU}
