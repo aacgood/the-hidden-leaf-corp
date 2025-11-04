@@ -1,29 +1,35 @@
 import json
 import boto3
 import requests
+from utils.secrets import get_secrets  # type: ignore
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
 REGION = "ap-southeast-1"
 TARGET_COURSES = [1,2,3,4,5,6,7,8,9,10,11,12,13,22,28,88,100]
 
-def get_secrets():
-    client = boto3.client("secretsmanager", region_name=REGION)
+SECRETS = get_secrets(["discord_keys", "supabase_keys"])
+DISCORD_WEBHOOK_CHANNEL_THLC_BOT = SECRETS.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT") 
+SUPABASE_URL = SECRETS.get("SUPABASE_URL") 
+SUPABASE_KEY = SECRETS.get("SUPABASE_KEY")
 
-    discord_secret = json.loads(
-        client.get_secret_value(SecretId="discord_keys")["SecretString"]
-    )
-    supabase_secret = json.loads(
-        client.get_secret_value(SecretId="supabase_keys")["SecretString"]
-    )
+# def get_secrets():
+#     client = boto3.client("secretsmanager", region_name=REGION)
 
-    return {
-        "DISCORD_WEBHOOK_CHANNEL_THLC_BOT": discord_secret.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT"),
-        "SUPABASE_URL": supabase_secret.get("SUPABASE_URL"),
-        "SUPABASE_KEY": supabase_secret.get("SUPABASE_KEY"),
-    }
+#     discord_secret = json.loads(
+#         client.get_secret_value(SecretId="discord_keys")["SecretString"]
+#     )
+#     supabase_secret = json.loads(
+#         client.get_secret_value(SecretId="supabase_keys")["SecretString"]
+#     )
 
-SECRETS = get_secrets()
+#     return {
+#         "DISCORD_WEBHOOK_CHANNEL_THLC_BOT": discord_secret.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT"),
+#         "SUPABASE_URL": supabase_secret.get("SUPABASE_URL"),
+#         "SUPABASE_KEY": supabase_secret.get("SUPABASE_KEY"),
+#     }
+
+# SECRETS = get_secrets()
 
 def get_director_api_key(key_ref: str) -> str | None:
     client = boto3.client("secretsmanager", region_name=REGION)
@@ -40,7 +46,7 @@ def get_director_api_key(key_ref: str) -> str | None:
     return api_key
 
 def send_discord_message(message: str):
-    webhook_url = SECRETS["DISCORD_WEBHOOK_CHANNEL_THLC_BOT"]
+    webhook_url = DISCORD_WEBHOOK_CHANNEL_THLC_BOT
     if not webhook_url:
         print("Discord webhook missing")
         return
@@ -77,7 +83,7 @@ def process_director_education_raw(supabase: Client, torn_user_id: int, complete
         print(f"Error upserting courses for user {torn_user_id}: {e}")
 
 def lambda_handler(event, context):
-    supabase: Client = create_client(SECRETS["SUPABASE_URL"], SECRETS["SUPABASE_KEY"])
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
     try:
         # This will also get prospective directors

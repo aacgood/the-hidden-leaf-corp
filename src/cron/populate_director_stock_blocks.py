@@ -1,46 +1,51 @@
 import json
 import boto3
 import requests
+from utils.secrets import get_secrets  # type: ignore
 from datetime import datetime, timezone
 from supabase import create_client, Client
 
 REGION = "ap-southeast-1"
 TARGET_STOCKS = [3,8,11,13,23,25]
 
-def get_secrets():
-    client = boto3.client("secretsmanager", region_name=REGION)
+# Fetch shared secrets once
+SECRETS = get_secrets(["discord_keys", "supabase_keys"])
+DISCORD_WEBHOOK_CHANNEL_THLC_BOT = SECRETS.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT") 
+SUPABASE_URL = SECRETS.get("SUPABASE_URL") 
+SUPABASE_KEY = SECRETS.get("SUPABASE_KEY")
 
-    discord_secret = json.loads(
-        client.get_secret_value(SecretId="discord_keys")["SecretString"]
-    )
-    supabase_secret = json.loads(
-        client.get_secret_value(SecretId="supabase_keys")["SecretString"]
-    )
+# def get_secrets():
+#     client = boto3.client("secretsmanager", region_name=REGION)
 
-    return {
-        "DISCORD_WEBHOOK_CHANNEL_THLC_BOT": discord_secret.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT"),
-        "SUPABASE_URL": supabase_secret.get("SUPABASE_URL"),
-        "SUPABASE_KEY": supabase_secret.get("SUPABASE_KEY"),
-    }
+#     discord_secret = json.loads(
+#         client.get_secret_value(SecretId="discord_keys")["SecretString"]
+#     )
+#     supabase_secret = json.loads(
+#         client.get_secret_value(SecretId="supabase_keys")["SecretString"]
+#     )
 
-SECRETS = get_secrets()
+#     return {
+#         "DISCORD_WEBHOOK_CHANNEL_THLC_BOT": discord_secret.get("DISCORD_WEBHOOK_CHANNEL_THLC_BOT"),
+#         "SUPABASE_URL": supabase_secret.get("SUPABASE_URL"),
+#         "SUPABASE_KEY": supabase_secret.get("SUPABASE_KEY"),
+#     }
+
+# SECRETS = get_secrets()
 
 def get_director_api_key(key_ref: str) -> str | None:
-    client = boto3.client("secretsmanager", region_name=REGION)
-    try:
-        secret_value = client.get_secret_value(SecretId="torn_director_api_keys")
-        secret_dict = json.loads(secret_value["SecretString"])
-    except Exception as e:
-        print(f"Error retrieving Torn API keys: {e}")
-        return None
-
-    api_key = secret_dict.get(key_ref)
+    """
+    Fetch a single director API key using the shared get_secrets() function.
+    Keeps the code simple by fetching only the 'torn_director_api_keys' secret
+    each time this function is called.
+    """
+    secrets = get_secrets(["torn_director_api_keys"])
+    api_key = secrets.get(key_ref)
     if not api_key:
         print(f"Torn API key for {key_ref} not found")
     return api_key
 
 def send_discord_message(message: str):
-    webhook_url = SECRETS["DISCORD_WEBHOOK_CHANNEL_THLC_BOT"]
+    webhook_url = DISCORD_WEBHOOK_CHANNEL_THLC_BOT
     if not webhook_url:
         print("Discord webhook missing")
         return
@@ -87,7 +92,7 @@ def process_director_stock_blocks_raw(supabase: Client, torn_user_id: int, stock
 
 
 def lambda_handler(event, context):
-    supabase: Client = create_client(SECRETS["SUPABASE_URL"], SECRETS["SUPABASE_KEY"])
+    supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
     try:
         # This will also get prospective directors

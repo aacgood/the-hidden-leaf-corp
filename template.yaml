@@ -121,6 +121,9 @@ Resources:
       Role: !GetAtt CronSecretsRole.Arn
       CodeUri: src/cron/
       Handler: populate_director_education.lambda_handler
+      Runtime: python3.12
+      Layers:
+        - !Ref SharedLayer
       Timeout: 30
       Events:
         DailySchedule:
@@ -137,6 +140,9 @@ Resources:
       Role: !GetAtt CronSecretsRole.Arn
       CodeUri: src/cron/
       Handler: populate_director_stock_blocks.lambda_handler
+      Runtime: python3.12
+      Layers:
+        - !Ref SharedLayer
       Timeout: 30
       Events:
         DailySchedule:
